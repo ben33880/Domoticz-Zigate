@@ -27,12 +27,14 @@
 
 """DNS name dictionary"""
 
-import collections
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 import dns.name
-from ._compat import xrange
 
 
-class NameDict(collections.MutableMapping):
+class NameDict(MutableMapping):
     """A dictionary whose keys are dns.name.Name objects.
 
     In addition to being like a regular Python dictionary, this
@@ -100,7 +102,7 @@ class NameDict(collections.MutableMapping):
         depth = len(name)
         if depth > self.max_depth:
             depth = self.max_depth
-        for i in xrange(-depth, 0):
+        for i in range(-depth, 0):
             n = dns.name.Name(name[i:])
             if n in self:
                 return (n, self[n])

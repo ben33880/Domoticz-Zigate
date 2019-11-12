@@ -38,8 +38,6 @@ import dns.renderer
 import dns.tsig
 import dns.wiredata
 
-from ._compat import long, xrange, string_types
-
 
 class ShortHeader(dns.exception.FormError):
     """The DNS packet passed to from_wire() is too short."""
@@ -66,6 +64,10 @@ class BadTSIG(dns.exception.FormError):
 
 class UnknownTSIGKey(dns.exception.DNSException):
     """A TSIG with an unknown key was received."""
+
+
+class Truncated(dns.exception.DNSException):
+    """The truncated flag is set."""
 
 
 #: The question section number
@@ -131,46 +133,46 @@ class Message(object):
         """
 
         s = StringIO()
-        s.write(u'id %d\n' % self.id)
-        s.write(u'opcode %s\n' %
+        s.write('id %d\n' % self.id)
+        s.write('opcode %s\n' %
                 dns.opcode.to_text(dns.opcode.from_flags(self.flags)))
         rc = dns.rcode.from_flags(self.flags, self.ednsflags)
-        s.write(u'rcode %s\n' % dns.rcode.to_text(rc))
-        s.write(u'flags %s\n' % dns.flags.to_text(self.flags))
+        s.write('rcode %s\n' % dns.rcode.to_text(rc))
+        s.write('flags %s\n' % dns.flags.to_text(self.flags))
         if self.edns >= 0:
-            s.write(u'edns %s\n' % self.edns)
+            s.write('edns %s\n' % self.edns)
             if self.ednsflags != 0:
-                s.write(u'eflags %s\n' %
+                s.write('eflags %s\n' %
                         dns.flags.edns_to_text(self.ednsflags))
-            s.write(u'payload %d\n' % self.payload)
+            s.write('payload %d\n' % self.payload)
         for opt in self.options:
-            s.write(u'option %s\n' % opt.to_text())
+            s.write('option %s\n' % opt.to_text())
         is_update = dns.opcode.is_update(self.flags)
         if is_update:
-            s.write(u';ZONE\n')
+            s.write(';ZONE\n')
         else:
-            s.write(u';QUESTION\n')
+            s.write(';QUESTION\n')
         for rrset in self.question:
             s.write(rrset.to_text(origin, relativize, **kw))
-            s.write(u'\n')
+            s.write('\n')
         if is_update:
-            s.write(u';PREREQ\n')
+            s.write(';PREREQ\n')
         else:
-            s.write(u';ANSWER\n')
+            s.write(';ANSWER\n')
         for rrset in self.answer:
             s.write(rrset.to_text(origin, relativize, **kw))
-            s.write(u'\n')
+            s.write('\n')
         if is_update:
-            s.write(u';UPDATE\n')
+            s.write(';UPDATE\n')
         else:
-            s.write(u';AUTHORITY\n')
+            s.write(';AUTHORITY\n')
         for rrset in self.authority:
             s.write(rrset.to_text(origin, relativize, **kw))
-            s.write(u'\n')
-        s.write(u';ADDITIONAL\n')
+            s.write('\n')
+        s.write(';ADDITIONAL\n')
         for rrset in self.additional:
             s.write(rrset.to_text(origin, relativize, **kw))
-            s.write(u'\n')
+            s.write('\n')
         #
         # We strip off the final \n so the caller can print the result without
         # doing weird things to get around eccentricities in Python print
@@ -472,7 +474,7 @@ class Message(object):
         if keyname is None:
             self.keyname = list(self.keyring.keys())[0]
         else:
-            if isinstance(keyname, string_types):
+            if isinstance(keyname, str):
                 keyname = dns.name.from_text(keyname)
             self.keyname = keyname
         self.keyalgorithm = algorithm
@@ -520,7 +522,7 @@ class Message(object):
             options = []
         else:
             # make sure the EDNS version in ednsflags agrees with edns
-            ednsflags &= long(0xFF00FFFF)
+            ednsflags &= 0xFF00FFFF
             ednsflags |= (edns << 16)
             if options is None:
                 options = []
@@ -561,7 +563,7 @@ class Message(object):
         (value, evalue) = dns.rcode.to_flags(rcode)
         self.flags &= 0xFFF0
         self.flags |= value
-        self.ednsflags &= long(0x00FFFFFF)
+        self.ednsflags &= 0x00FFFFFF
         self.ednsflags |= evalue
         if self.ednsflags != 0 and self.edns < 0:
             self.edns = 0
@@ -617,7 +619,7 @@ class _WireReader(object):
         if self.updating and qcount > 1:
             raise dns.exception.FormError
 
-        for i in xrange(0, qcount):
+        for i in range(0, qcount):
             (qname, used) = dns.name.from_wire(self.wire, self.current)
             if self.message.origin is not None:
                 qname = qname.relativize(self.message.origin)
@@ -645,7 +647,7 @@ class _WireReader(object):
         else:
             force_unique = False
         seen_opt = False
-        for i in xrange(0, count):
+        for i in range(0, count):
             rr_start = self.current
             (name, used) = dns.name.from_wire(self.wire, self.current)
             absolute_name = name
@@ -741,8 +743,11 @@ class _WireReader(object):
         (self.message.id, self.message.flags, qcount, ancount,
          aucount, adcount) = struct.unpack('!HHHHHH', self.wire[:12])
         self.current = 12
+        self.message.original_id = self.message.id
         if dns.opcode.is_update(self.message.flags):
             self.updating = True
+        if self.message.flags & dns.flags.TC:
+            raise Truncated
         self._get_question(qcount)
         if self.question_only:
             return
@@ -805,6 +810,8 @@ def from_wire(wire, keyring=None, request_mac=b'', xfr=False, origin=None,
 
     Raises ``dns.message.BadTSIG`` if a TSIG record was not the last
     record of the additional data section.
+
+    Raises ``dns.message.Truncated`` if the TC flag is set.
 
     Returns a ``dns.message.Message``.
     """
@@ -1041,7 +1048,7 @@ def from_file(f):
     Returns a ``dns.message.Message object``
     """
 
-    str_type = string_types
+    str_type = str
     opts = 'rU'
 
     if isinstance(f, str_type):
@@ -1099,11 +1106,11 @@ def make_query(qname, rdtype, rdclass=dns.rdataclass.IN, use_edns=None,
     Returns a ``dns.message.Message``
     """
 
-    if isinstance(qname, string_types):
+    if isinstance(qname, str):
         qname = dns.name.from_text(qname)
-    if isinstance(rdtype, string_types):
+    if isinstance(rdtype, str):
         rdtype = dns.rdatatype.from_text(rdtype)
-    if isinstance(rdclass, string_types):
+    if isinstance(rdclass, str):
         rdclass = dns.rdataclass.from_text(rdclass)
     m = Message()
     m.flags |= dns.flags.RD

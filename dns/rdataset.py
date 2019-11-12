@@ -26,7 +26,6 @@ import dns.rdatatype
 import dns.rdataclass
 import dns.rdata
 import dns.set
-from ._compat import string_types
 
 # define SimpleSet here for backwards compatibility
 SimpleSet = dns.set.Set
@@ -206,12 +205,12 @@ class Rdataset(dns.set.Set):
             # some dynamic updates, so we don't need to print out the TTL
             # (which is meaningless anyway).
             #
-            s.write(u'{}{}{} {}\n'.format(ntext, pad,
-                                          dns.rdataclass.to_text(rdclass),
-                                          dns.rdatatype.to_text(self.rdtype)))
+            s.write('{}{}{} {}\n'.format(ntext, pad,
+                                         dns.rdataclass.to_text(rdclass),
+                                         dns.rdatatype.to_text(self.rdtype)))
         else:
             for rd in self:
-                s.write(u'%s%s%d %s %s %s\n' %
+                s.write('%s%s%d %s %s %s\n' %
                         (ntext, pad, self.ttl, dns.rdataclass.to_text(rdclass),
                          dns.rdatatype.to_text(self.rdtype),
                          rd.to_text(origin=origin, relativize=relativize,
@@ -297,9 +296,9 @@ def from_text_list(rdclass, rdtype, ttl, text_rdatas):
     Returns a ``dns.rdataset.Rdataset`` object.
     """
 
-    if isinstance(rdclass, string_types):
+    if isinstance(rdclass, str):
         rdclass = dns.rdataclass.from_text(rdclass)
-    if isinstance(rdtype, string_types):
+    if isinstance(rdtype, str):
         rdtype = dns.rdatatype.from_text(rdtype)
     r = Rdataset(rdclass, rdtype)
     r.update_ttl(ttl)

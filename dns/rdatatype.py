@@ -71,6 +71,7 @@ NSEC3 = 50
 NSEC3PARAM = 51
 TLSA = 52
 HIP = 55
+NINFO = 56
 CDS = 59
 CDNSKEY = 60
 OPENPGPKEY = 61
@@ -143,6 +144,7 @@ _by_text = {
     'NSEC3PARAM': NSEC3PARAM,
     'TLSA': TLSA,
     'HIP': HIP,
+    'NINFO': NINFO,
     'CDS': CDS,
     'CDNSKEY': CDNSKEY,
     'OPENPGPKEY': OPENPGPKEY,
@@ -170,6 +172,9 @@ _by_text = {
 # would cause the mapping not to be true inverse.
 
 _by_value = {y: x for x, y in _by_text.items()}
+# Render type 0 as "TYPE0" not "NONE", as NONE is a dnspython-ism and not
+# an official mnemonic.
+_by_value[0] = 'TYPE0'
 
 _metatypes = {
     OPT: True

@@ -24,7 +24,6 @@ __all__ = [
     'entropy',
     'exception',
     'flags',
-    'hash',
     'inet',
     'ipv4',
     'ipv6',
@@ -54,3 +53,5 @@ __all__ = [
     'wiredata',
     'zone',
 ]
+
+from dns.version import version as __version__

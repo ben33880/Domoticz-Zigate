@@ -154,6 +154,8 @@ class GenericOption(Option):
             return 1
         return -1
 
+    def __str__(self):
+        return self.to_text()
 
 class ECSOption(Option):
     """EDNS Client Subnet (ECS, RFC7871)"""
@@ -195,12 +197,64 @@ class ECSOption(Option):
         self.addrdata = addrdata[:nbytes]
         nbits = srclen % 8
         if nbits != 0:
-            last = struct.pack('B', ord(self.addrdata[-1:]) & (0xff << nbits))
+            last = struct.pack('B',
+                               ord(self.addrdata[-1:]) & (0xff << (8 - nbits)))
             self.addrdata = self.addrdata[:-1] + last
 
     def to_text(self):
         return "ECS {}/{} scope/{}".format(self.address, self.srclen,
                                            self.scopelen)
+    @staticmethod
+    def from_text(text):
+        """Convert a string into a `dns.edns.ECSOption`
+
+        :param text: string
+        :return: `dns.edns.ECSOption`
+
+        Examples:
+
+        >>> import dns.edns
+        >>>
+        >>> # basic example
+        >>> dns.edns.ECSOption.from_text('1.2.3.4/24')
+        >>>
+        >>> # also understands scope
+        >>> dns.edns.ECSOption.from_text('1.2.3.4/24/32')
+        >>>
+        >>> # IPv6
+        >>> dns.edns.ECSOption.from_text('2001:4b98::1/64/64')
+        >>>
+        >>> # it understands results from `dns.edns.ECSOption.to_text()`
+        >>> dns.edns.ECSOption.from_text('ECS 1.2.3.4/24/32')
+        """
+        optional_prefix = 'ECS'
+        tokens = text.split()
+        ecs_text = None
+        if len(tokens) == 1:
+            ecs_text = tokens[0]
+        elif len(tokens) == 2:
+            if tokens[0] != optional_prefix:
+                raise ValueError('could not parse ECS from "{}"'.format(text))
+            ecs_text = tokens[1]
+        else:
+            raise ValueError('could not parse ECS from "{}"'.format(text))
+        n_slashes = ecs_text.count('/')
+        if n_slashes == 1:
+            address, srclen = ecs_text.split('/')
+            scope = 0
+        elif n_slashes == 2:
+            address, srclen, scope = ecs_text.split('/')
+        else:
+            raise ValueError('could not parse ECS from "{}"'.format(text))
+        try:
+            scope = int(scope)
+        except ValueError:
+            raise ValueError('invalid scope "{}": scope must be an integer'.format(scope))
+        try:
+            srclen = int(srclen)
+        except ValueError:
+            raise ValueError('invalid srclen "{}": srclen must be an integer'.format(srclen))
+        return ECSOption(address, srclen, scope)
 
     def to_wire(self, file):
         file.write(struct.pack('!H', self.family))
@@ -232,6 +286,9 @@ class ECSOption(Option):
         if self.addrdata > other.addrdata:
             return 1
         return -1
+
+    def __str__(self):
+        return self.to_text()
 
 _type_to_class = {
         ECS: ECSOption

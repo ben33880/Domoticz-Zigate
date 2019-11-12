@@ -35,7 +35,6 @@ import dns.rrset
 import dns.tokenizer
 import dns.ttl
 import dns.grange
-from ._compat import string_types, text_type, PY3
 
 
 class BadZone(dns.exception.DNSException):
@@ -95,7 +94,7 @@ class Zone(object):
         @type rdclass: int"""
 
         if origin is not None:
-            if isinstance(origin, string_types):
+            if isinstance(origin, str):
                 origin = dns.name.from_text(origin)
             elif not isinstance(origin, dns.name.Name):
                 raise ValueError("origin parameter must be convertible to a "
@@ -129,7 +128,7 @@ class Zone(object):
         return not self.__eq__(other)
 
     def _validate_name(self, name):
-        if isinstance(name, string_types):
+        if isinstance(name, str):
             name = dns.name.from_text(name, None)
         elif not isinstance(name, dns.name.Name):
             raise KeyError("name parameter must be convertible to a DNS name")
@@ -157,19 +156,13 @@ class Zone(object):
         return self.nodes.__iter__()
 
     def iterkeys(self):
-        if PY3:
-            return self.nodes.keys() # pylint: disable=dict-keys-not-iterating
-        else:
-            return self.nodes.iterkeys()  # pylint: disable=dict-iter-method
+        return self.nodes.keys() # pylint: disable=dict-keys-not-iterating
 
     def keys(self):
         return self.nodes.keys() # pylint: disable=dict-keys-not-iterating
 
     def itervalues(self):
-        if PY3:
-            return self.nodes.values() # pylint: disable=dict-values-not-iterating
-        else:
-            return self.nodes.itervalues()  # pylint: disable=dict-iter-method
+        return self.nodes.values() # pylint: disable=dict-values-not-iterating
 
     def values(self):
         return self.nodes.values() # pylint: disable=dict-values-not-iterating
@@ -265,9 +258,9 @@ class Zone(object):
         """
 
         name = self._validate_name(name)
-        if isinstance(rdtype, string_types):
+        if isinstance(rdtype, str):
             rdtype = dns.rdatatype.from_text(rdtype)
-        if isinstance(covers, string_types):
+        if isinstance(covers, str):
             covers = dns.rdatatype.from_text(covers)
         node = self.find_node(name, create)
         return node.find_rdataset(self.rdclass, rdtype, covers, create)
@@ -328,9 +321,9 @@ class Zone(object):
         """
 
         name = self._validate_name(name)
-        if isinstance(rdtype, string_types):
+        if isinstance(rdtype, str):
             rdtype = dns.rdatatype.from_text(rdtype)
-        if isinstance(covers, string_types):
+        if isinstance(covers, str):
             covers = dns.rdatatype.from_text(covers)
         node = self.get_node(name)
         if node is not None:
@@ -391,9 +384,9 @@ class Zone(object):
         """
 
         name = self._validate_name(name)
-        if isinstance(rdtype, string_types):
+        if isinstance(rdtype, str):
             rdtype = dns.rdatatype.from_text(rdtype)
-        if isinstance(covers, string_types):
+        if isinstance(covers, str):
             covers = dns.rdatatype.from_text(covers)
         rdataset = self.nodes[name].find_rdataset(self.rdclass, rdtype, covers)
         rrset = dns.rrset.RRset(name, self.rdclass, rdtype, covers)
@@ -447,9 +440,9 @@ class Zone(object):
         @type covers: int or string
         """
 
-        if isinstance(rdtype, string_types):
+        if isinstance(rdtype, str):
             rdtype = dns.rdatatype.from_text(rdtype)
-        if isinstance(covers, string_types):
+        if isinstance(covers, str):
             covers = dns.rdatatype.from_text(covers)
         for (name, node) in self.iteritems(): # pylint: disable=dict-iter-method
             for rds in node:
@@ -470,9 +463,9 @@ class Zone(object):
         @type covers: int or string
         """
 
-        if isinstance(rdtype, string_types):
+        if isinstance(rdtype, str):
             rdtype = dns.rdatatype.from_text(rdtype)
-        if isinstance(covers, string_types):
+        if isinstance(covers, str):
             covers = dns.rdatatype.from_text(covers)
         for (name, node) in self.iteritems(): # pylint: disable=dict-iter-method
             for rds in node:
@@ -499,7 +492,7 @@ class Zone(object):
         @type nl: string or None
         """
 
-        if isinstance(f, string_types):
+        if isinstance(f, str):
             f = open(f, 'wb')
             want_close = True
         else:
@@ -513,8 +506,8 @@ class Zone(object):
 
         if nl is None:
             nl_b = os.linesep.encode(file_enc)  # binary mode, '\n' is not enough
-            nl = u'\n'
-        elif isinstance(nl, string_types):
+            nl = '\n'
+        elif isinstance(nl, str):
             nl_b = nl.encode(file_enc)
         else:
             nl_b = nl
@@ -529,7 +522,7 @@ class Zone(object):
             for n in names:
                 l = self[n].to_text(n, origin=self.origin,
                                     relativize=relativize)
-                if isinstance(l, text_type):
+                if isinstance(l, str):
                     l_b = l.encode(file_enc)
                 else:
                     l_b = l
@@ -619,7 +612,7 @@ class _MasterReader(object):
 
     def __init__(self, tok, origin, rdclass, relativize, zone_factory=Zone,
                  allow_include=False, check_origin=True):
-        if isinstance(origin, string_types):
+        if isinstance(origin, str):
             origin = dns.name.from_text(origin)
         self.tok = tok
         self.current_origin = origin
@@ -665,7 +658,9 @@ class _MasterReader(object):
         token = self.tok.get()
         if not token.is_identifier():
             raise dns.exception.SyntaxError
+
         # TTL
+        ttl = None
         try:
             ttl = dns.ttl.from_text(token.value)
             self.last_ttl = ttl
@@ -674,12 +669,11 @@ class _MasterReader(object):
             if not token.is_identifier():
                 raise dns.exception.SyntaxError
         except dns.ttl.BadTTL:
-            if not (self.last_ttl_known or self.default_ttl_known):
-                raise dns.exception.SyntaxError("Missing default TTL value")
             if self.default_ttl_known:
                 ttl = self.default_ttl
-            else:
+            elif self.last_ttl_known:
                 ttl = self.last_ttl
+
         # Class
         try:
             rdclass = dns.rdataclass.from_text(token.value)
@@ -726,6 +720,16 @@ class _MasterReader(object):
             self.default_ttl = rd.minimum
             self.default_ttl_known = True
 
+        # TTL check
+        if ttl is None:
+            if not (self.last_ttl_known or self.default_ttl_known):
+                raise dns.exception.SyntaxError("Missing default TTL value")
+            else:
+                if self.default_ttl_known:
+                    ttl = self.default_ttl
+                else:
+                    ttl = self.last_ttl
+
         rd.choose_relativity(self.zone.origin, self.relativize)
         covers = rd.covers()
         rds = n.find_rdataset(rdclass, rdtype, covers, True)
@@ -734,9 +738,9 @@ class _MasterReader(object):
     def _parse_modify(self, side):
         # Here we catch everything in '{' '}' in a group so we can replace it
         # with ''.
-        is_generate1 = re.compile("^.*\$({(\+|-?)(\d+),(\d+),(.)}).*$")
-        is_generate2 = re.compile("^.*\$({(\+|-?)(\d+)}).*$")
-        is_generate3 = re.compile("^.*\$({(\+|-?)(\d+),(\d+)}).*$")
+        is_generate1 = re.compile(r"^.*\$({(\+|-?)(\d+),(\d+),(.)}).*$")
+        is_generate2 = re.compile(r"^.*\$({(\+|-?)(\d+)}).*$")
+        is_generate3 = re.compile(r"^.*\$({(\+|-?)(\d+),(\d+)}).*$")
         # Sometimes there are modifiers in the hostname. These come after
         # the dollar sign. They are in the form: ${offset[,width[,base]]}.
         # Make names
@@ -754,10 +758,9 @@ class _MasterReader(object):
             base = 'd'
         g3 = is_generate3.match(side)
         if g3:
-            mod, sign, offset, width = g1.groups()
+            mod, sign, offset, width = g3.groups()
             if sign == '':
                 sign = '+'
-            width = g1.groups()[2]
             base = 'd'
 
         if not (g1 or g2 or g3):
@@ -811,7 +814,7 @@ class _MasterReader(object):
                 raise dns.exception.SyntaxError("Missing default TTL value")
             if self.default_ttl_known:
                 ttl = self.default_ttl
-            else:
+            elif self.last_ttl_known:
                 ttl = self.last_ttl
         # Class
         try:
@@ -846,21 +849,21 @@ class _MasterReader(object):
         for i in range(start, stop + 1, step):
             # +1 because bind is inclusive and python is exclusive
 
-            if lsign == u'+':
+            if lsign == '+':
                 lindex = i + int(loffset)
-            elif lsign == u'-':
+            elif lsign == '-':
                 lindex = i - int(loffset)
 
-            if rsign == u'-':
+            if rsign == '-':
                 rindex = i - int(roffset)
-            elif rsign == u'+':
+            elif rsign == '+':
                 rindex = i + int(roffset)
 
             lzfindex = str(lindex).zfill(int(lwidth))
             rzfindex = str(rindex).zfill(int(rwidth))
 
-            name = lhs.replace(u'$%s' % (lmod), lzfindex)
-            rdata = rhs.replace(u'$%s' % (rmod), rzfindex)
+            name = lhs.replace('$%s' % (lmod), lzfindex)
+            rdata = rhs.replace('$%s' % (rmod), rzfindex)
 
             self.last_name = dns.name.from_text(name, self.current_origin)
             name = self.last_name
@@ -925,21 +928,21 @@ class _MasterReader(object):
                 elif token.is_comment():
                     self.tok.get_eol()
                     continue
-                elif token.value[0] == u'$':
+                elif token.value[0] == '$':
                     c = token.value.upper()
-                    if c == u'$TTL':
+                    if c == '$TTL':
                         token = self.tok.get()
                         if not token.is_identifier():
                             raise dns.exception.SyntaxError("bad $TTL")
                         self.default_ttl = dns.ttl.from_text(token.value)
                         self.default_ttl_known = True
                         self.tok.get_eol()
-                    elif c == u'$ORIGIN':
+                    elif c == '$ORIGIN':
                         self.current_origin = self.tok.get_name()
                         self.tok.get_eol()
                         if self.zone.origin is None:
                             self.zone.origin = self.current_origin
-                    elif c == u'$INCLUDE' and self.allow_include:
+                    elif c == '$INCLUDE' and self.allow_include:
                         token = self.tok.get()
                         filename = token.value
                         token = self.tok.get()
@@ -965,7 +968,7 @@ class _MasterReader(object):
                         self.tok = dns.tokenizer.Tokenizer(self.current_file,
                                                            filename)
                         self.current_origin = new_origin
-                    elif c == u'$GENERATE':
+                    elif c == '$GENERATE':
                         self._generate_line()
                     else:
                         raise dns.exception.SyntaxError(
@@ -1060,16 +1063,10 @@ def from_file(f, origin=None, rdclass=dns.rdataclass.IN,
     @rtype: dns.zone.Zone object
     """
 
-    str_type = string_types
-    if PY3:
-        opts = 'r'
-    else:
-        opts = 'rU'
-
-    if isinstance(f, str_type):
+    if isinstance(f, str):
         if filename is None:
             filename = f
-        f = open(f, opts)
+        f = open(f, 'r')
         want_close = True
     else:
         if filename is None:

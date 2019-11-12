@@ -21,7 +21,6 @@ import socket
 import sys
 import time
 import random
-
 try:
     import threading as _threading
 except ImportError:
@@ -39,7 +38,6 @@ import dns.rdataclass
 import dns.rdatatype
 import dns.reversename
 import dns.tsig
-from ._compat import xrange, string_types
 
 if sys.platform == 'win32':
     try:
@@ -182,6 +180,8 @@ class NoRootSOA(dns.exception.DNSException):
 class NoMetaqueries(dns.exception.DNSException):
     """DNS metaqueries are not allowed."""
 
+class NoResolverConfiguration(dns.exception.DNSException):
+    """Resolver configuration could not be read or specified no nameservers."""
 
 class Answer(object):
     """DNS stub resolver answer.
@@ -200,14 +200,17 @@ class Answer(object):
     """
 
     def __init__(self, qname, rdtype, rdclass, response,
-                 raise_on_no_answer=True):
+                 raise_on_no_answer=True, nameserver=None,
+                 port=None):
         self.qname = qname
         self.rdtype = rdtype
         self.rdclass = rdclass
         self.response = response
+        self.nameserver = nameserver
+        self.port = port
         min_ttl = -1
         rrset = None
-        for count in xrange(0, 15):
+        for count in range(0, 15):
             try:
                 rrset = response.find_rrset(response.answer, qname,
                                             rdclass, rdtype)
@@ -573,14 +576,12 @@ class Resolver(object):
         a ``text``, it is used as the name of the file to open; otherwise it
         is treated as the file itself."""
 
-        if isinstance(f, string_types):
+        if isinstance(f, str):
             try:
                 f = open(f, 'r')
             except IOError:
                 # /etc/resolv.conf doesn't exist, can't be read, etc.
-                # We'll just use the default resolver configuration.
-                self.nameservers = ['127.0.0.1']
-                return
+                raise NoResolverConfiguration
             want_close = True
         else:
             want_close = False
@@ -608,7 +609,7 @@ class Resolver(object):
             if want_close:
                 f.close()
         if len(self.nameservers) == 0:
-            self.nameservers.append('127.0.0.1')
+            raise NoResolverConfiguration
 
     def _determine_split_char(self, entry):
         #
@@ -824,7 +825,7 @@ class Resolver(object):
 
         *source_port*, an ``int``, the port from which to send the message.
 
-        *lifetime*, a ``float``, how long query should run before timing out.
+        *lifetime*, a ``float``, how many seconds a query should run before timing out.
 
         Raises ``dns.exception.Timeout`` if no answers could be found
         in the specified lifetime.
@@ -844,13 +845,13 @@ class Resolver(object):
         Returns a ``dns.resolver.Answer`` instance.
         """
 
-        if isinstance(qname, string_types):
+        if isinstance(qname, str):
             qname = dns.name.from_text(qname, None)
-        if isinstance(rdtype, string_types):
+        if isinstance(rdtype, str):
             rdtype = dns.rdatatype.from_text(rdtype)
         if dns.rdatatype.is_metatype(rdtype):
             raise NoMetaqueries
-        if isinstance(rdclass, string_types):
+        if isinstance(rdclass, str):
             rdclass = dns.rdataclass.from_text(rdclass)
         if dns.rdataclass.is_metaclass(rdclass):
             raise NoMetaqueries
@@ -893,6 +894,10 @@ class Resolver(object):
             if self.rotate:
                 random.shuffle(nameservers)
             backoff = 0.10
+            # keep track of nameserver and port
+            # to include them in Answer
+            nameserver_answered = None
+            port_answered = None
             while response is None:
                 if len(nameservers) == 0:
                     raise NoNameservers(request=request, errors=errors)
@@ -907,11 +912,13 @@ class Resolver(object):
                                                      source=source,
                                                      source_port=source_port)
                         else:
-                            response = dns.query.udp(request, nameserver,
-                                                     timeout, port,
-                                                     source=source,
-                                                     source_port=source_port)
-                            if response.flags & dns.flags.TC:
+                            try:
+                                response = dns.query.udp(request, nameserver,
+                                                         timeout, port,
+                                                         source=source,
+                                                         source_port=\
+                                                         source_port)
+                            except dns.message.Truncated:
                                 # Response truncated; retry with TCP.
                                 tcp_attempt = True
                                 timeout = self._compute_timeout(start, lifetime)
@@ -960,6 +967,8 @@ class Resolver(object):
                                        response))
                         response = None
                         continue
+                    nameserver_answered = nameserver
+                    port_answered = port
                     rcode = response.rcode()
                     if rcode == dns.rcode.YXDOMAIN:
                         ex = YXDOMAIN()
@@ -1001,7 +1010,7 @@ class Resolver(object):
         if all_nxdomain:
             raise NXDOMAIN(qnames=qnames_to_try, responses=nxdomain_responses)
         answer = Answer(_qname, rdtype, rdclass, response,
-                        raise_on_no_answer)
+                        raise_on_no_answer, nameserver_answered, port_answered)
         if self.cache:
             self.cache.put((_qname, rdtype, rdclass), answer)
         return answer
@@ -1121,7 +1130,7 @@ def zone_for_name(name, rdclass=dns.rdataclass.IN, tcp=False, resolver=None):
     Returns a ``dns.name.Name``.
     """
 
-    if isinstance(name, string_types):
+    if isinstance(name, str):
         name = dns.name.from_text(name, dns.name.root)
     if resolver is None:
         resolver = get_default_resolver()
@@ -1162,7 +1171,10 @@ _original_gethostbyaddr = socket.gethostbyaddr
 def _getaddrinfo(host=None, service=None, family=socket.AF_UNSPEC, socktype=0,
                  proto=0, flags=0):
     if flags & (socket.AI_ADDRCONFIG | socket.AI_V4MAPPED) != 0:
-        raise NotImplementedError
+        # Not implemented.  We raise a gaierror as opposed to a
+        # NotImplementedError as it helps callers handle errors more
+        # appropriately.  [Issue #316]
+        raise socket.gaierror(socket.EAI_SYSTEM)
     if host is None and service is None:
         raise socket.gaierror(socket.EAI_NONAME)
     v6addrs = []

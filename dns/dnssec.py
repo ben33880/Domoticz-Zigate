@@ -17,6 +17,7 @@
 
 """Common DNSSEC-related functions and constants."""
 
+import hashlib  # used in make_ds() to avoid pycrypto dependency
 from io import BytesIO
 import struct
 import time
@@ -28,7 +29,6 @@ import dns.rdataset
 import dns.rdata
 import dns.rdatatype
 import dns.rdataclass
-from ._compat import string_types
 
 
 class UnsupportedAlgorithm(dns.exception.DNSException):
@@ -132,7 +132,6 @@ def key_id(key, origin=None):
     """
 
     rdata = _to_rdata(key, origin)
-    rdata = bytearray(rdata)
     if key.algorithm == RSAMD5:
         return (rdata[-3] << 8) + rdata[-2]
     else:
@@ -162,21 +161,20 @@ def make_ds(name, key, algorithm, origin=None):
 
     Returns a ``dns.rdtypes.ANY.DS``.
     """
-
     if algorithm.upper() == 'SHA1':
         dsalg = 1
-        hash = SHA1.new()
+        dshash = hashlib.sha1()
     elif algorithm.upper() == 'SHA256':
         dsalg = 2
-        hash = SHA256.new()
+        dshash = hashlib.sha256()
     else:
         raise UnsupportedAlgorithm('unsupported algorithm "%s"' % algorithm)
 
-    if isinstance(name, string_types):
+    if isinstance(name, str):
         name = dns.name.from_text(name, origin)
-    hash.update(name.canonicalize().to_wire())
-    hash.update(_to_rdata(key, origin))
-    digest = hash.digest()
+    dshash.update(name.canonicalize().to_wire())
+    dshash.update(_to_rdata(key, origin))
+    digest = dshash.digest()
 
     dsrdata = struct.pack("!HBB", key_id(key), key.algorithm, dsalg) + digest
     return dns.rdata.from_wire(dns.rdataclass.IN, dns.rdatatype.DS, dsrdata, 0,
@@ -292,7 +290,7 @@ def _validate_rrsig(rrset, rrsig, keys, origin=None, now=None):
     in seconds since the UNIX epoch.  The default is the current time.
     """
 
-    if isinstance(origin, string_types):
+    if isinstance(origin, str):
         origin = dns.name.from_text(origin, dns.name.root)
 
     candidate_keys = _find_candidate_keys(keys, rrsig)
@@ -443,7 +441,7 @@ def _validate(rrset, rrsigset, keys, origin=None, now=None):
     in seconds since the UNIX epoch.  The default is the current time.
     """
 
-    if isinstance(origin, string_types):
+    if isinstance(origin, str):
         origin = dns.name.from_text(origin, dns.name.root)
 
     if isinstance(rrset, tuple):
