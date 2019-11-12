@@ -90,12 +90,8 @@ def LoadDeviceList( self ):
 
             Modules.tools.loggingDatabase( self, 'Debug', "LoadDeviceList - " +str(key) + " => dlVal " +str(dlVal) , key)
 
-            if not dlVal.get('Version') :
-                Domoticz.Error("LoadDeviceList - entry " +key +" not loaded - not Version 3 - " +str(dlVal) )
-                res = "Failed"
-
-            if dlVal['Version'] != '3' :
-                Domoticz.Error("LoadDeviceList - entry " +key +" not loaded - not Version 3 - " +str(dlVal) )
+            if dlVal['Version'] not in ( '3', '4') :
+                Domoticz.Error("LoadDeviceList - entry %s not loaded , due to unknown version %s" %(key, str(dlVal)))
                 res = "Failed"
             else:
                 nb = nb +1
@@ -117,6 +113,27 @@ def LoadDeviceList( self ):
             for iterEp in self.ListOfDevices[addr]['Ep']:
                 self.ListOfDevices[addr]['ConfigureReporting']['Ep'][iterEp] = {}
                 self.ListOfDevices[addr]['ConfigureReporting']['TimeStamps'] = {}
+
+        if self.ListOfDevices[ addr ]['Version'] == '3':
+            if 'Ep' in self.ListOfDevices[ addr ]:
+                for ep in self.ListOfDevices[ addr ]['Ep']:
+                    if ep in ( 'ClusterType' ): 
+                        continue
+                    for cluster in self.ListOfDevices[ addr ]['Ep'][ ep ]:
+                        if cluster in ( 'Type', 'ClusterType', 'ColorMode' ):
+                            continue
+                        if not isinstance( self.ListOfDevices[ addr ]['Ep'][ ep ][cluster] , dict):
+                            self.ListOfDevices[ addr ]['Ep'][ ep ][cluster] = {}
+            Domoticz.Log("--> %s upgraded to data structure version 4." %addr)
+            self.ListOfDevices[ addr ]['Version'] = '4'
+
+        elif self.ListOfDevices[ addr ]['Version'] == '4':
+            # Cross-check the change is in place
+            if 'Ep' in self.ListOfDevices[ addr ]:
+                for ep in self.ListOfDevices[ addr ]['Ep']:
+                    for cluster in self.ListOfDevices[ addr ]['Ep'][ ep ]:
+                        if not isinstance( self.ListOfDevices[ addr ]['Ep'][ ep ][cluster] , dict):
+                            Domoticz.Error("Device %s has an incorrect datastructure: %s" %(addr, self.ListOfDevices[ addr ]['Ep'][ ep ][ cluster ]))
 
     Domoticz.Status("Entries loaded from " +str(_DeviceListFileName) + " : " +str(nb) )
 

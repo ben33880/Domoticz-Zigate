@@ -225,7 +225,7 @@ def initDeviceInList(self, Nwkid) :
     if Nwkid not in self.ListOfDevices:
         if Nwkid != '' :
             self.ListOfDevices[Nwkid]={}
-            self.ListOfDevices[Nwkid]['Version']="3"
+            self.ListOfDevices[Nwkid]['Version']="4"
             self.ListOfDevices[Nwkid]['ZDeviceName']=""
             self.ListOfDevices[Nwkid]['Status']="004d"
             self.ListOfDevices[Nwkid]['SQN']=''
@@ -263,8 +263,10 @@ def timeStamped( self, key, Type ):
             self.ListOfDevices[key]['Stamp'] = {}
             self.ListOfDevices[key]['Stamp']['Time'] = {}
             self.ListOfDevices[key]['Stamp']['MsgType'] = {}
-        self.ListOfDevices[key]['Stamp']['Time'] = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-        self.ListOfDevices[key]['Stamp']['MsgType'] = "%4x" %(Type)
+
+        if Type not in ( 0x8702, 0x8000): # Store only for meaningfull messages
+            self.ListOfDevices[key]['Stamp']['Time'] = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+            self.ListOfDevices[key]['Stamp']['MsgType'] = "%4x" %(Type)
 
 def updSQN_mainpower(self, key, newSQN):
 
