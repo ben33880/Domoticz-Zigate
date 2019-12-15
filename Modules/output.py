@@ -160,29 +160,29 @@ def normalizedReadAttributeReq( self, addr, EpIn, EpOut, Cluster , ListOfAttribu
 
         if 'TimeStamps' not in  self.ListOfDevices[addr]['ReadAttributes']:
             skipReadAttr = True
-        if str(EpOut+'-'+str(Cluster)) not in self.ListOfDevices[addr]['ReadAttributes']['TimeStamps']:
+        if not skipReadAttr and str(EpOut+'-'+str(Cluster)) not in self.ListOfDevices[addr]['ReadAttributes']['TimeStamps']:
             skipReadAttr = True
-        if 'ReadAttributes' not in self.ListOfDevices[addr]:
+        if not skipReadAttr and 'ReadAttributes' not in self.ListOfDevices[addr]:
             skipReadAttr = True
-        if 'Ep' not in self.ListOfDevices[addr]['ReadAttributes']:
+        if not skipReadAttr and 'Ep' not in self.ListOfDevices[addr]['ReadAttributes']:
             skipReadAttr = True
-        if EpOut not in  self.ListOfDevices[addr]['ReadAttributes']['Ep']:
+        if not skipReadAttr and EpOut not in  self.ListOfDevices[addr]['ReadAttributes']['Ep']:
             skipReadAttr = True
-        if str(Cluster) not in  self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut]:
+        if not skipReadAttr and str(Cluster) not in  self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut]:
             skipReadAttr = True
-        if Attr not in self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)]:
+        if not skipReadAttr and Attr not in self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)]:
             skipReadAttr = False
 
-        if  self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] == {} and \
+        if  not skipReadAttr and self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] == {} and \
                 self.ListOfDevices[addr]['ReadAttributes']['TimeStamps'][EpOut+'-'+str(Cluster)] != 0:
             loggingOutput( self, 'Debug', "normalizedReadAttrReq - cannot get Attribute self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
             skipReadAttr = True
-        if self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] in ( '86', '8c'):    # 8c Not supported, 86 No cluster match
+        if not skipReadAttr and self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] in ( '86', '8c'):    # 8c Not supported, 86 No cluster match
             loggingOutput( self, 'Debug', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
             skipReadAttr = True
-        if self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] != '00' and \
+        if not skipReadAttr and self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] != '00' and \
                 self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] != {}:
             loggingOutput( self, 'Debug', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
