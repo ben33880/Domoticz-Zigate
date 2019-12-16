@@ -254,12 +254,12 @@ def mgtCommand( self, Devices, Unit, Command, Level, Color ) :
         elif DeviceType == 'LegrandFilPilote':
             
             FIL_PILOTE_MODE = {
-                '10': 'Confort',
-                '20': 'Confort -1',
-                '30': 'Confort -2',
-                '40': 'Eco',
-                '40': 'Hors Gel',
-                '50': 'Off',
+                10: 'Confort',
+                20: 'Confort -1',
+                30: 'Confort -2',
+                40: 'Eco',
+                40: 'Hors Gel',
+                50: 'Off',
                 }
 
             loggingCommand( self, 'Log', "mgtCommand : Set Level for Device: %s EPout: %s Unit: %s DeviceType: %s Level: %s" %(NWKID, EPout, Unit, DeviceType, Level), NWKID)
@@ -444,9 +444,9 @@ def mgtCommand( self, Devices, Unit, Command, Level, Color ) :
             loggingCommand( self, 'Debug', "---------- Set Hue X: %s Saturation: %s" %(hue, saturation), NWKID)
             sendZigateCmd(self, "00B6","02" + NWKID + EPin + EPout + Hex_Format(2,hue) + Hex_Format(2,saturation) + "0000")
             loggingCommand( self, 'Debug', "---------- Set Level: %s" %(value), NWKID)
-            value = int(l * 254//100)
-            OnOff = '01'
-            sendZigateCmd(self, "0081","02" + NWKID + EPin + EPout + OnOff + Hex_Format(2,value) + "0000")
+            #value = int(l * 254//100)
+            #OnOff = '01'
+            #sendZigateCmd(self, "0081","02" + NWKID + EPin + EPout + OnOff + Hex_Format(2,value) + "0000")
 
         #Update Device
         self.ListOfDevices[NWKID]['Heartbeat'] = 0  # Let's force a refresh of Attribute in the next Heartbeat
