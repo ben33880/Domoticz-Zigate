@@ -431,8 +431,8 @@ def mgtCommand( self, Devices, Unit, Command, Level, Color ) :
 
             value = int(l * 254//100)
             OnOff = '01'
-            loggingCommand( self, 'Log', "---------- Set Level: %s" %(value), NWKID)
-            sendZigateCmd(self, "0081","02" + NWKID + EPin + EPout + OnOff + Hex_Format(2,value) + "0000")
+            loggingCommand( self, 'Debug', "---------- Set Level: %s instead of Level: %s" %(value, Level), NWKID)
+            #sendZigateCmd(self, "0081","02" + NWKID + EPin + EPout + OnOff + Hex_Format(2,value) + "0000")
 
         #With saturation and hue, not seen in domoticz but present on zigate, and some device need it
         elif Hue_List['m'] == 9998:
@@ -443,10 +443,11 @@ def mgtCommand( self, Devices, Unit, Command, Level, Color ) :
             saturation = int(saturation*254//100)
             loggingCommand( self, 'Debug', "---------- Set Hue X: %s Saturation: %s" %(hue, saturation), NWKID)
             sendZigateCmd(self, "00B6","02" + NWKID + EPin + EPout + Hex_Format(2,hue) + Hex_Format(2,saturation) + "0000")
-            loggingCommand( self, 'Debug', "---------- Set Level: %s" %(value), NWKID)
-            #value = int(l * 254//100)
-            #OnOff = '01'
-            #sendZigateCmd(self, "0081","02" + NWKID + EPin + EPout + OnOff + Hex_Format(2,value) + "0000")
+
+            value = int(l * 254//100)
+            OnOff = '01'
+            loggingCommand( self, 'Debug', "---------- Set Level: %s instead of Level: %s" %(value, Level), NWKID)
+            sendZigateCmd(self, "0081","02" + NWKID + EPin + EPout + OnOff + Hex_Format(2,value) + "0000")
 
         #Update Device
         self.ListOfDevices[NWKID]['Heartbeat'] = 0  # Let's force a refresh of Attribute in the next Heartbeat
