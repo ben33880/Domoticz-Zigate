@@ -869,12 +869,13 @@ def Cluster0702( self, Devices, MsgSQN, MsgSrcAddr, MsgSrcEp, MsgClusterId, MsgA
         self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
 
     elif MsgAttrID == "0400": 
-
-        value = round(value/10, 3)
+        # InstantDemand will be transfer to Domoticz in Watts
         # It would be nice to use the Divisor, Multiplier if existing to compute the value
+        conso = value
+        value = round(conso/10, 3)
         if 'Model' in self.ListOfDevices[MsgSrcAddr]:
             if self.ListOfDevices[MsgSrcAddr]['Model'] == 'EH-ZB-SPD-V2':
-                value = round(value, 3)
+                value = round(conso, 3)
 
         loggingCluster( self, 'Debug', "Cluster0702 - 0x0400 Instant demand %s" %(value), MsgSrcAddr)
         MajDomoDevice(self, Devices, MsgSrcAddr, MsgSrcEp, MsgClusterId,str(value))
