@@ -277,7 +277,7 @@ def Decode8000_v2(self, Devices, MsgData, MsgRSSI) : # Status
         self.groupmgt.statusGroupRequest( MsgData )
 
     if str(MsgData[0:2]) != "00" :
-        loggingInput( self, 'Debug', "Decode8000 - PacketType: %s Status: [%s] - %s" \
+        loggingInput( self, 'Log', "Decode8000 - PacketType: %s Status: [%s] - %s" \
                 %(PacketType, MsgData[0:2], Status))
 
     return
@@ -1817,12 +1817,11 @@ def Decode004D(self, Devices, MsgData, MsgRSSI) : # Reception Device announce
         self.ListOfDevices[MsgSrcAddr]['Heartbeat'] = 0
 
         # In case of livolo redo the bind if enabled in the Settings
-        if self.pluginconf.pluginConf['rebindLivolo']:
-            PREFIX_MACADDR_LIVOLO = '00124b00'
-
-            if MsgIEEE[0:len(PREFIX_MACADDR_LIVOLO)] == PREFIX_MACADDR_LIVOLO:
-                loggingInput( self,"reBind Livolo", MsgSrcAddr)
-                livolo_bind( self, MsgSrcAddr, '06')
+        if not self.pluginconf.pluginConf['enableSchneiderWiser'] and self.pluginconf.pluginConf['rebindLivolo']:
+                PREFIX_MACADDR_LIVOLO = '00124b00'
+                if MsgIEEE[0:len(PREFIX_MACADDR_LIVOLO)] == PREFIX_MACADDR_LIVOLO:
+                    loggingInput( self,"reBind Livolo", MsgSrcAddr)
+                    livolo_bind( self, MsgSrcAddr, '06')
 
         # If this is a rejoin after a leave, let's update the Status
         if self.ListOfDevices[MsgSrcAddr]['Status'] == 'Left':
@@ -1879,9 +1878,10 @@ def Decode004D(self, Devices, MsgData, MsgRSSI) : # Reception Device announce
             sendZigateCmd(self,"0042", str(MsgSrcAddr) )
     else:
         # New Device coming for provisioning
-        PREFIX_MACADDR_LIVOLO = '00124b00'
-        if MsgIEEE[0:len(PREFIX_MACADDR_LIVOLO)] == PREFIX_MACADDR_LIVOLO:
-            livolo_bind( self, MsgSrcAddr, '06')
+        if not self.pluginconf.pluginConf['enableSchneiderWiser']:
+            PREFIX_MACADDR_LIVOLO = '00124b00'
+            if MsgIEEE[0:len(PREFIX_MACADDR_LIVOLO)] == PREFIX_MACADDR_LIVOLO:
+                livolo_bind( self, MsgSrcAddr, '06')
 
         # New device comming. The IEEE is not known
         loggingInput( self, 'Debug', "Decode004D - New Device %s %s" %(MsgSrcAddr, MsgIEEE), MsgSrcAddr)
