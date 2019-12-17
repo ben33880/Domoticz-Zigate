@@ -870,22 +870,22 @@ def Cluster0702( self, Devices, MsgSQN, MsgSrcAddr, MsgSrcEp, MsgClusterId, MsgA
 
     elif MsgAttrID == "0400": 
         # InstantDemand will be transfer to Domoticz in Watts
-        # It would be nice to use the Divisor, Multiplier if existing to compute the value
-        conso = value
+        conso = value # Raw value
 
         if '0302' in self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]:
             diviser = self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]['0302']
-            loggingCluster( self, 'Log', "Cluster0702 - 0x0400 Instant demand %s --> %s Watts" %( conso, round( conso / ( diviser * 1000 ),3))) 
-
-        value = round(conso/10, 3)
-        if 'Model' in self.ListOfDevices[MsgSrcAddr]:
-            if self.ListOfDevices[MsgSrcAddr]['Model'] == 'EH-ZB-SPD-V2':
-                value = round(conso, 3)
+            value = round( conso / ( diviser / 1000 ),3)
+            loggingCluster( self, 'Log', "Cluster0702 - 0x0400 Instant demand %s, div: %s --> %s Watts" %( conso, diviser, value))
+        else:
+            # Old fashion
+            value = round(conso/10, 3)
+            if 'Model' in self.ListOfDevices[MsgSrcAddr]:
+                if self.ListOfDevices[MsgSrcAddr]['Model'] == 'EH-ZB-SPD-V2':
+                    value = round(conso, 3)
 
         loggingCluster( self, 'Debug', "Cluster0702 - 0x0400 Instant demand %s" %(value), MsgSrcAddr)
         MajDomoDevice(self, Devices, MsgSrcAddr, MsgSrcEp, MsgClusterId,str(value))
         self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = conso
-
     else:
         loggingCluster( self, 'Log', "readCluster - %s - %s/%s unknown attribute: %s %s %s %s " %(MsgClusterId, MsgSrcAddr, MsgSrcEp, MsgAttrID, MsgAttType, MsgAttSize, MsgClusterData), MsgSrcAddr)
         self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
