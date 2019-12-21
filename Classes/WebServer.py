@@ -1119,7 +1119,10 @@ class WebServer(object):
                             setting['DataType'] = SETTINGS[_theme]['param'][param]['type']
                             setting['restart_need'] = SETTINGS[_theme]['param'][param]['restart']
                             setting['Advanced'] = SETTINGS[_theme]['param'][param]['Advanced']
-                            setting['current_value'] = self.pluginconf.pluginConf[param] 
+                            if SETTINGS[_theme]['param'][param]['type'] == 'hex':
+                                setting['current_value'] = '%x' %self.pluginconf.pluginConf[param] 
+                            else:
+                                setting['current_value'] = self.pluginconf.pluginConf[param] 
                             theme['ListOfSettings'].append ( setting )
                     setting_lst.append( theme )
                 _response["Data"] = json.dumps( setting_lst, sort_keys=True )
