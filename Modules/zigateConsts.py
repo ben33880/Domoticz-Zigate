@@ -464,3 +464,90 @@ LEGRAND_REMOTES = ( 'Remote switch', 'Double gangs remote switch', 'Shutters cen
 LEGRAND_REMOTE_SWITCHS = ( 'Remote switch', 'Double gangs remote switch')
 LEGRAND_REMOTE_SHUTTER = ( 'Shutters central remote switch', )
 
+CFG_RPT_ATTRIBUTESbyCLUSTERS = {
+        # 0xFFFF sable reporting-
+        # 6460   - 6 hours
+        # 0x0E10 - 3600s A hour
+        # 0x0708 - 30'
+        # 0x0384 - 15'
+        # 0x012C - 5'
+        # 0x003C - 1'
+    # Basic Cluster
+    #'0000': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'FFFE', 'TimeOut':'0000','Change':'01'},
+    #                         '0032': {'DataType': '10', 'MinInterval':'0005', 'MaxInterval':'1C20', 'TimeOut':'0FFF','Change':'01'},
+    #                         '0033': {'DataType': '10', 'MinInterval':'0005', 'MaxInterval':'1C20', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # Power Cluster
+    '0001': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'FFFE', 'TimeOut':'0000','Change':'01'},
+                             '0020': {'DataType': '29', 'MinInterval':'0E10', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '0021': {'DataType': '29', 'MinInterval':'0E10', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # On/Off Cluster
+    '0006': {'Attributes': { '0000': {'DataType': '10', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # Level Control Cluster
+    '0008': {'Attributes': { '0000': {'DataType': '20', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'05'}}},
+
+    # Windows Covering
+    '0102': {'Attributes': { '0000': {'DataType': '30', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'05'},
+                             '0003': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '0004': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '0008': {'DataType': '20', 'MinInterval':'0001', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
+                             '0009': {'DataType': '20', 'MinInterval':'0001', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
+    # Thermostat
+    '0201': {'Attributes': { '0000': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
+                             '0001': {'DataType': '20', 'MinInterval':'0600', 'MaxInterval':'5460', 'TimeOut':'0FFF','Change':'01'},
+                             '0008': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '0011': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '0012': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '0014': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '001B': {'DataType': '30', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
+                             '001C': {'DataType': '30', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'}}},
+    # Colour Control
+    '0300': {'Attributes': { '0000': {'DataType': '20', 'MinInterval':'0384', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "010D", "0210", "0105", "0200"}},
+                             '0001': {'DataType': '20', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "0105", "010D", "0210", "0200"}},
+                             '0003': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "010D", "0210", "0200"}}, # Color X
+                             '0004': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "010D", "0210", "0200"}}, # Color Y
+                             '0007': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "0102", "010D", "0210", "0220"}}, # Color Temp
+                             '0008': {'DataType': '30', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ }}}}, # Color Mode
+    # Illuminance Measurement
+    '0400': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'0F'}}},
+    # Temperature
+    '0402': {'Attributes': { '0000': {'DataType': '29', 'MinInterval':'000A', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
+    # Pression Atmo
+    '0403': {'Attributes': { '0000': {'DataType': '20', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
+                             '0010': {'DataType': '29', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
+    # Humidity
+    '0405': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # Occupancy Sensing
+    '0406': {'Attributes': { '0000': {'DataType': '18', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
+                             # Sensitivy for HUE Motion
+                             '0030': {'DataType': '20', 'MinInterval':'0005', 'MaxInterval':'1C20', 'TimeOut':'0FFF','Change':'01'}}},
+    # IAS ZOne
+    '0500': {'Attributes': { '0000': {'DataType': '30', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
+                             '0001': {'DataType': '31', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
+                             '0002': {'DataType': '19', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
+    # IAS Warning Devices
+    '0502': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # Power
+    '0702': {'Attributes': { 
+                            '0000': {'DataType': '25', 'MinInterval':'FFFF', 'MaxInterval':'0000', 'TimeOut':'0000','Change':'00'},
+                            '0400': {'DataType': '2a', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # Electrical Measurement
+    '0b04': {'Attributes': {
+                            '0505': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
+                            '0508': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
+                            '050b': {'DataType': '29', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
+
+    #'fc01': {'Attributes': {
+    #                        '0000': {'DataType': '09', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
+    #                        '0001': {'DataType': '10', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
+
+    # Binary Input ( Basic )
+    #'000f': {'Attributes': {
+    #                        '0055': {'DataType': '10', 'MinInterval':'000A', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
+    }
+
