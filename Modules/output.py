@@ -18,9 +18,8 @@ import json
 from datetime import datetime
 from time import time
 
-from Modules.zigateConsts import ZLL_DEVICES, MAX_LOAD_ZIGATE, CLUSTERS_LIST, MAX_READATTRIBUTES_REQ, LEGRAND_REMOTES
+from Modules.zigateConsts import ZLL_DEVICES, MAX_LOAD_ZIGATE, CLUSTERS_LIST, MAX_READATTRIBUTES_REQ, LEGRAND_REMOTES, ADDRESS_MODE, CFG_RPT_ATTRIBUTESbyCLUSTERS
 from Modules.tools import getClusterListforEP, loggingOutput, mainPoweredDevice
-from Modules.zigateConsts import ADDRESS_MODE
 
 def ZigatePermitToJoin( self, permit ):
 
@@ -187,6 +186,18 @@ def normalizedReadAttributeReq( self, addr, EpIn, EpOut, Cluster , ListOfAttribu
             loggingOutput( self, 'Debug', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
             skipReadAttr = True
+
+        if not skipReadAttr and 'Model' in self.ListOfDevices[addr]:
+            if self.ListOfDevices[addr]['Model'] in self.DeviceConf:
+                #Domoticz.Log("-----> Checking Attributes from Model for device %s" %addr)
+                if 'ReadAttributes' in self.DeviceConf[ self.ListOfDevices[addr]['Model'] ]:
+                    #Domoticz.Log("-------> Checking Attributes from Model is IN")
+                    if Cluster in  self.DeviceConf[ self.ListOfDevices[addr]['Model'] ]['ReadAttributes']:
+                        #Domoticz.Log("---------> Checking Attributes %s from Model is IN, Cluster %s against %s" %( Attr, Cluster, self.DeviceConf[ self.ListOfDevices[addr]['Model'] ]['ReadAttributes'][Cluster]))
+                        if Attr not in self.DeviceConf[ self.ListOfDevices[addr]['Model'] ]['ReadAttributes'][Cluster]:
+                            loggingOutput( self, 'Debug', "normalizedReadAttrReq - Skip Read Attribute due to DeviceConf Nwkid: %s Cluster: %s Attribute: %s"
+                                    %(addr, Cluster, Attr ), nwkid=addr)
+                            skipReadAttr = True
 
         return skipReadAttr
 
@@ -399,6 +410,11 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
                     listAttributes.append(0xe000)        # SNP.R.04.01.14
                     listAttributes.append(0xe001)        # 
                     listAttributes.append(0xe002)        # 
+                    copylistAttributes= list( listAttributes)
+                    listAttributes = []
+                    for iterAttr in copylistAttributes:
+                        if iterAttr not in ( 0x0003, 0x000f, 0x0015, 0xf000, 0x4000):
+                            listAttributes.append( iterAttr)
 
                 if self.ListOfDevices[key]['Model'] == 'TI0001':
                     copylistAttributes= list( listAttributes)
@@ -459,6 +475,16 @@ def ReadAttributeRequest_0001(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0001'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+
+    if 'Model' in self.ListOfDevices[key]:
+        if self.ListOfDevices[key]['Model'] != {}:
+            if self.ListOfDevices[key]['Model'] == 'EH-ZB-RTS': # Schneider Thermostat
+                copylistAttributes= list( listAttributes)
+                listAttributes = []
+                for iterAttr in copylistAttributes:
+                    if iterAttr not in ( 0x0000, 0x0001, 0x0003 ):
+                        listAttributes.append( iterAttr)
 
     loggingOutput( self, 'Debug', "Request Power Config via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0001", listAttributes )
@@ -945,92 +971,6 @@ def processConfigureReporting( self, NWKID=None ):
 
     '''
 
-    ATTRIBUTESbyCLUSTERS = {
-            # 0xFFFF sable reporting-
-            # 6460   - 6 hours
-            # 0x0E10 - 3600s A hour
-            # 0x0708 - 30'
-            # 0x0384 - 15'
-            # 0x012C - 5'
-            # 0x003C - 1'
-        # Basic Cluster
-        #'0000': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'FFFE', 'TimeOut':'0000','Change':'01'},
-        #                         '0032': {'DataType': '10', 'MinInterval':'0005', 'MaxInterval':'1C20', 'TimeOut':'0FFF','Change':'01'},
-        #                         '0033': {'DataType': '10', 'MinInterval':'0005', 'MaxInterval':'1C20', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # Power Cluster
-        '0001': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'FFFE', 'TimeOut':'0000','Change':'01'},
-                                 '0020': {'DataType': '29', 'MinInterval':'0E10', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '0021': {'DataType': '29', 'MinInterval':'0E10', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # On/Off Cluster
-        '0006': {'Attributes': { '0000': {'DataType': '10', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # Level Control Cluster
-        '0008': {'Attributes': { '0000': {'DataType': '20', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'05'}}},
-
-        # Windows Covering
-        '0102': {'Attributes': { '0000': {'DataType': '30', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'05'},
-                                 '0003': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '0004': {'DataType': '21', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '0008': {'DataType': '20', 'MinInterval':'0001', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
-                                 '0009': {'DataType': '20', 'MinInterval':'0001', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
-        # Thermostat
-        '0201': {'Attributes': { '0000': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
-                                 '0001': {'DataType': '20', 'MinInterval':'0600', 'MaxInterval':'5460', 'TimeOut':'0FFF','Change':'01'},
-                                 '0008': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '0011': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '0012': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '0014': {'DataType': '29', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '001B': {'DataType': '30', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'},
-                                 '001C': {'DataType': '30', 'MinInterval':'012C', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01'}}},
-        # Colour Control
-        '0300': {'Attributes': { '0000': {'DataType': '20', 'MinInterval':'0384', 'MaxInterval':'0E10', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "010D", "0210", "0105", "0200"}},
-                                 '0001': {'DataType': '20', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "0105", "010D", "0210", "0200"}},
-                                 '0003': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "010D", "0210", "0200"}}, # Color X
-                                 '0004': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "010D", "0210", "0200"}}, # Color Y
-                                 '0007': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ "0102", "010D", "0210", "0220"}}, # Color Temp
-                                 '0008': {'DataType': '30', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01', 'ZDeviceID':{ }}}}, # Color Mode
-        # Illuminance Measurement
-        '0400': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'0F'}}},
-        # Temperature
-        '0402': {'Attributes': { '0000': {'DataType': '29', 'MinInterval':'000A', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
-        # Pression Atmo
-        '0403': {'Attributes': { '0000': {'DataType': '20', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
-                                 '0010': {'DataType': '29', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
-        # Humidity
-        '0405': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # Occupancy Sensing
-        '0406': {'Attributes': { '0000': {'DataType': '18', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
-                                 # Sensitivy for HUE Motion
-                                 '0030': {'DataType': '20', 'MinInterval':'0005', 'MaxInterval':'1C20', 'TimeOut':'0FFF','Change':'01'}}},
-        # IAS ZOne
-        '0500': {'Attributes': { '0000': {'DataType': '30', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
-                                 '0001': {'DataType': '31', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'},
-                                 '0002': {'DataType': '19', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
-        # IAS Warning Devices
-        '0502': {'Attributes': { '0000': {'DataType': '21', 'MinInterval':'003C', 'MaxInterval':'0384', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # Power
-        '0702': {'Attributes': { 
-                                '0000': {'DataType': '25', 'MinInterval':'FFFF', 'MaxInterval':'0000', 'TimeOut':'0000','Change':'00'},
-                                '0400': {'DataType': '2a', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # Electrical Measurement
-        '0b04': {'Attributes': {
-                                '0505': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
-                                '0508': {'DataType': '21', 'MinInterval':'0001', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
-                                '050b': {'DataType': '29', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
-
-        #'fc01': {'Attributes': {
-        #                        '0000': {'DataType': '09', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'},
-        #                        '0001': {'DataType': '10', 'MinInterval':'0005', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
-
-        # Binary Input ( Basic )
-        #'000f': {'Attributes': {
-        #                        '0055': {'DataType': '10', 'MinInterval':'000A', 'MaxInterval':'012C', 'TimeOut':'0FFF','Change':'01'}}},
-        }
 
     now = int(time())
     if NWKID is None :
@@ -1073,6 +1013,14 @@ def processConfigureReporting( self, NWKID=None ):
                 if self.ListOfDevices[key]['Model'] in ( 'lumi.ctrl_neutral1' , 'lumi.ctrl_neutral2' ):
                     continue
 
+        cluster_list = CFG_RPT_ATTRIBUTESbyCLUSTERS
+        if 'Model' in self.ListOfDevices[key]:
+            if self.ListOfDevices[key]['Model'] in self.DeviceConf:
+                if 'ConfigureReporting' in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]:
+                    spec_cfgrpt = self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ConfigureReporting']
+                    cluster_list = spec_cfgrpt
+                    loggingOutput( self, 'Debug2', "------> CFG_RPT_ATTRIBUTESbyCLUSTERS updated: %s --> %s" %(key, cluster_list), nwkid=key)
+
         loggingOutput( self, 'Debug2', "----> configurereporting - processing %s" %key, nwkid=key)
 
         manufacturer = "0000"
@@ -1087,7 +1035,7 @@ def processConfigureReporting( self, NWKID=None ):
             for cluster in clusterList:
                 if cluster in ( 'Type', 'ColorMode', 'ClusterType' ):
                     continue
-                if cluster not in ATTRIBUTESbyCLUSTERS:
+                if cluster not in cluster_list:
                     continue
                 if 'Model' in self.ListOfDevices[key]:
                     if  self.ListOfDevices[key]['Model'] != {}:
@@ -1156,7 +1104,7 @@ def processConfigureReporting( self, NWKID=None ):
                 attrDisp = []   # Used only for printing purposes
                 attrList = ''
                 attrLen = 0
-                for attr in ATTRIBUTESbyCLUSTERS[cluster]['Attributes']:
+                for attr in cluster_list[cluster]['Attributes']:
                     # Check if the Attribute is listed in the Attributes List (provided by the Device
                     # In case Attributes List exists, we have git the list of reported attribute.
                     if cluster == '0300': 
@@ -1165,9 +1113,9 @@ def processConfigureReporting( self, NWKID=None ):
                             continue
 
                         ZDeviceID = self.ListOfDevices[key]['ZDeviceID']
-                        if 'ZDeviceID' in  ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]:
-                            if ZDeviceID not in ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['ZDeviceID'] and \
-                                    len( ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['ZDeviceID'] ) != 0:
+                        if 'ZDeviceID' in  cluster_list[cluster]['Attributes'][attr]:
+                            if ZDeviceID not in cluster_list[cluster]['Attributes'][attr]['ZDeviceID'] and \
+                                    len( cluster_list[cluster]['Attributes'][attr]['ZDeviceID'] ) != 0:
                                 loggingOutput( self, 'Debug2',"configureReporting - %s/%s skip Attribute %s for Cluster %s due to ZDeviceID %s" %(key,Ep,attr, cluster, ZDeviceID), nwkid=key)
                                 continue
                    
@@ -1189,11 +1137,11 @@ def processConfigureReporting( self, NWKID=None ):
                                         continue
 
                     attrdirection = "00"
-                    attrType = ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['DataType']
-                    minInter = ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['MinInterval']
-                    maxInter = ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['MaxInterval']
-                    timeOut = ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['TimeOut']
-                    chgFlag = ATTRIBUTESbyCLUSTERS[cluster]['Attributes'][attr]['Change']
+                    attrType = cluster_list[cluster]['Attributes'][attr]['DataType']
+                    minInter = cluster_list[cluster]['Attributes'][attr]['MinInterval']
+                    maxInter = cluster_list[cluster]['Attributes'][attr]['MaxInterval']
+                    timeOut = cluster_list[cluster]['Attributes'][attr]['TimeOut']
+                    chgFlag = cluster_list[cluster]['Attributes'][attr]['Change']
 
                     attrList += attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                     attrLen += 1
@@ -1243,6 +1191,12 @@ def bindDevice( self, ieee, ep, cluster, destaddr=None, destep="01"):
         if nwkid in self.ListOfDevices:
             if 'Model' in self.ListOfDevices[nwkid]:
                 if self.ListOfDevices[nwkid]['Model'] != {}:
+                    if self.ListOfDevices[nwkid]['Model'] in self.DeviceConf:
+                        if 'ClusterToBind' in self.DeviceConf[ self.ListOfDevices[nwkid]['Model'] ]:
+                            if cluster not in self.DeviceConf[ self.ListOfDevices[nwkid]['Model'] ]['ClusterToBind']:
+                                loggingOutput( self, 'Log',"----> Do not bind cluster %s due to Certified Conf for %s/%s" %(cluster, nwkid, ep), nwkid)
+                                return
+
                     if self.ListOfDevices[nwkid]['Model'] in ( 'lumi.ctrl_neutral2', 'lumi.ctrl_neutral1'):
                         # Do not bind as the device do not respond to it.
                         return
@@ -1783,39 +1737,50 @@ def ReadAttributeRequest_0201(self, key):
             if "0201" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
                     EPout=tmpEp
 
+    if 'Model' in self.ListOfDevices[key]:
+        _model = True
+
     # Thermostat Information
     listAttributes = []
-    listAttributes.append(0x0000)        # Local Temp / 0x29
-    listAttributes.append(0x0008)        # Pi Heating Demand (valve position %)
-    listAttributes.append(0x0010)        # Calibration / 0x28
-    #listAttributes.append(0x0011)        # COOLING_SETPOINT / 0x29
-    listAttributes.append(0x0012)        # HEATING_SETPOINT / 0x29
-    listAttributes.append(0x0014)        # Unoccupied Heating Setpoint 0x29
-    #listAttributes.append(0x0015)        # MIN HEATING / 0x29
-    #listAttributes.append(0x0016)        # MAX HEATING / 0x29
-    listAttributes.append(0x001B)        # Control sequence
-    listAttributes.append(0x001C)        # System Mode
-    listAttributes.append(0x001F)        # Set Mode
-    loggingOutput( self, 'Debug', "Request 0201 %s/%s-%s 0201 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
-    ReadAttributeReq( self, key, EPin, EPout, "0201", listAttributes )
+
+    if _model and self.ListOfDevices[key]['Model'] != 'EH-ZB-RTS':
+        listAttributes.append(0x0000)        # Local Temp / 0x29
+        listAttributes.append(0x0008)        # Pi Heating Demand (valve position %)
+        listAttributes.append(0x0010)        # Calibration / 0x28
+        #listAttributes.append(0x0011)        # COOLING_SETPOINT / 0x29
+        listAttributes.append(0x0012)        # HEATING_SETPOINT / 0x29
+        listAttributes.append(0x0014)        # Unoccupied Heating Setpoint 0x29
+        #listAttributes.append(0x0015)        # MIN HEATING / 0x29
+        #listAttributes.append(0x0016)        # MAX HEATING / 0x29
+        listAttributes.append(0x001B)        # Control sequence
+        listAttributes.append(0x001C)        # System Mode
+        listAttributes.append(0x001F)        # Set Mode
+        loggingOutput( self, 'Debug', "Request 0201 %s/%s-%s 0201 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
+        ReadAttributeReq( self, key, EPin, EPout, "0201", listAttributes )
 
     listAttributes = []
-    if str(self.ListOfDevices[key]['Model']).find('SPZB') == 0:
+    if _model and str(self.ListOfDevices[key]['Model']).find('SPZB') == 0:
         loggingOutput( self, 'Debug', "- req Attributes for Eurotronic", nwkid=key)
         listAttributes.append(0x4000)        # TRV Mode
         listAttributes.append(0x4001)        # Set Valve Position
         listAttributes.append(0x4002)        # Errors
         listAttributes.append(0x4003)        # Curret Temperature Set point Eurotronics
-        listAttributes.append(0x4008)        # HOst Flag
-    elif str(self.ListOfDevices[key]['Model']).find('Super TR') == 0:
+        listAttributes.append(0x4008)        # Host Flag
+
+    elif _model and str(self.ListOfDevices[key]['Model']).find('Super TR') == 0:
         loggingOutput( self, 'Debug', "- req Attributes for  Super TR", nwkid=key)
         listAttributes.append(0x0403)    
         listAttributes.append(0x0405)
         listAttributes.append(0x0406)
         listAttributes.append(0x0408)   
         listAttributes.append(0x0409)  
-    elif str(self.ListOfDevices[key]['Model']).find('EH-ZB-RTS') == 0:
-        listAttributes.append(0xe010)  
+
+    elif _model and self.ListOfDevices[key]['Model'] != 'EH-ZB-RTS':
+        listAttributes.append(0x0012)    
+        listAttributes.append(0xe010)     
+        listAttributes.append(0x0015)
+        listAttributes.append(0x0016)
+
 
     if len(listAttributes) > 0:
         loggingOutput( self, 'Debug', "Request 0201 %s/%s-%s 0201 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
@@ -1888,6 +1853,9 @@ def schneider_thermostat( self, key ):
     write_attribute( self, key, "01", EPout, cluster_id, manuf_id, manuf_spec, Hattribute, data_type, data)
 
 
+    #  Wite Attribute 0x42 Value = 'en'
+
+    cluster_id = "%04x" %0x0000
     Hattribute = "%04x" %0x5011
     data_type = "42" # String
 
@@ -1896,23 +1864,49 @@ def schneider_thermostat( self, key ):
     loggingOutput( self, 'Log', "Schneider Write Attribute %s with value %s / cluster: %s, attribute: %s type: %s"
             %(key,data,cluster_id,Hattribute,data_type), nwkid=key)
 
-    #write_attribute( self, key, "01", EPout, cluster_id, manuf_id, manuf_spec, Hattribute, data_type, data)
+    write_attribute( self, key, "01", EPout, cluster_id, manuf_id, manuf_spec, Hattribute, data_type, data)
 
-    payload = '14' + '5e10' + '00' + '02' + '1150' + data_type + '02' + data 
-    raw_APS_request( self, key, EPout, '0000', '0104', payload, zigate_ep='01')
+    # APS Data: 0x00 0x0b 0x00 0x00 0x04 0x01 0x0b 0x73 0x14 0x5e 0x10 0x3e 0x02 0x11 0x50 0x42 0x02 0x65 0x6e
+    #                                                                                                |--------| -> Value
+    #                                                                                           |--|------------> Len 
+    #                                                                                      |--|-----------------> Data Type
+    #                                                                            |-------|----------------------> Attribute 0x5011
+    #                                                                       |--|--------------------------------> Command Write Attr
+    #                                                                  |--|--------------------------------------> SQN
+    #                                                        |-------|-------------------------------------------> Manuf Code
+    #                                                   |--|-----------------------------------------------------> Cluster Frame
+
+    #cluster_frame = '14'
+    #manuf_code = '5e10'
+    #sqn = '00'
+    #cmd ='02'
+    #attribute = '1150'
+    #dataType = '42'
+    #length ='02'
+    #value = '656e'
+
+    #payload = cluster_frame + manuf_code + sqn + cmd + attribute + dataType + length + value
+    #Domoticz.Log("Write Attribute via APS RAW on 0x0000/0x5011 - %s ==> Payload: %s" %(key, payload))
+    #raw_APS_request( self, key, EPout, '0000', '0104', payload, zigate_ep='01')
 
 def schneider_setpoint( self, key, setpoint):
 
+    # SetPoint 21°C ==> 2100 => 0x0834
+    # APS Data: 0x00 0x0b 0x01 0x02 0x04 0x01 0x0b 0x45 0x11 0xc1 0xe0 0x00 0x01 0x34 0x08 0xff
+    #                                                                            |---------------> LB HB Setpoint
+    #                                                             |--|---------------------------> Command 0xe0
+    #                                                        |--|--------------------------------> SQN
+    #                                                   |--|-------------------------------------> Cluster Frame
 
-    # Use Command 0xE0 on Cluster 0x0201
-    # Payload:
-    # Temp Setpoint is 20.00 ==> 2000
-    #  SQN / CMD / 00 / 01 / 34 / 08 ff
-    #        xEO / 00 / Lenghth / setpoint ( Low/ High / ff
+    cluster_frame = '11'
+    sqn = '00'
+    cmd = 'e0'
 
-    setpointHL = '%04X' %setpoint
+    setpoint = int(( setpoint * 2 ) / 2)   # Round to 0.5 degrees
+    setpoint = '%04X' %setpoint
+    length = '01' # 1 attribute
 
-    payload = '00' + 'E0' + '00' + '03' + setpointHL[2:4] + setpointHL[0:2]  + 'FF'
+    payload = cluster_frame + sqn + cmd + '00' + length + setpoint[2:4] + setpoint[0:2] + 'ff'
 
     EPout = '01'
     for tmpEp in self.ListOfDevices[key]['Ep']:
