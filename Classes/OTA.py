@@ -50,9 +50,10 @@ WAIT_TO_NEXT_IMAGE = 25 # Time to wait before processing next Image/Firmware
 
 IKEA_MANUF_CODE = 0x117c
 LEDVANCE_MANUF_CODE = 0x4489
+OSRAM_MANUF_CODE = 0xbbaa
 
-OTA_MANUF_CODE = ( IKEA_MANUF_CODE, LEDVANCE_MANUF_CODE)
-OTA_MANUF_NAME = ( '117c', 'IKEA of Sweden', '4489')
+OTA_MANUF_CODE = ( IKEA_MANUF_CODE, LEDVANCE_MANUF_CODE, OSRAM_MANUF_CODE)
+OTA_MANUF_NAME = ( '117c', 'IKEA of Sweden', '4489', 'LEDVANCE', 'bbaa', 'OSRAM')
 
 
 BATTERY_TYPES = ( 4545, 4546, 4548, 4549 )
@@ -175,11 +176,11 @@ class OTAManagement(object):
             else:
                 self.logging( 'Debug', "ota_decode_new_image - %21s : 0x%X " %(x,headers[x]))
 
-        #for attribut in headers:
-        #    if isinstance(headers[attribut], int):
-        #        Domoticz.Log("==> %s : 0x%x" %(attribut,headers[attribut]))
-        #    else:
-        #        Domoticz.Log("==> %s : %s" %(attribut,headers[attribut]))
+        for attribut in headers:
+            if isinstance(headers[attribut], int):
+                self.logging( 'Debug', "==> %s : 0x%x" %(attribut,headers[attribut]))
+            else:
+                self.logging( 'Debug', "==> %s : %s" %(attribut,headers[attribut]))
 
         # For DEV only in order to force Upgrade
         # Domoticz.Log('Force Image Version to +10 - MUST BE REMOVED BEFORE PRODUCTION')
@@ -648,13 +649,15 @@ class OTAManagement(object):
                 otaDevice = False
                 if 'Manufacturer Name' in self.ListOfDevices[ iterDev ]:
                     if self.ListOfDevices[iterDev]['Manufacturer'] in OTA_MANUF_NAME:
+                        manufCode = self.ListOfDevices[iterDev]['Manufacturer']
                         otaDevice = True
-                if 'Manufacturer' in self.ListOfDevices[ iterDev ]:
+                if not otaDevice and 'Manufacturer' in self.ListOfDevices[ iterDev ]:
                     if self.ListOfDevices[iterDev]['Manufacturer Name'] in OTA_MANUF_NAME:
+                        manufCode = self.ListOfDevices[iterDev]['Manufacturer']
                         otaDevice = True
 
                 if not otaDevice:
-                    self.logging( 'Debug', "OTA heartbeat - skip %s Not an IKEA products" %iterDev)
+                    self.logging( 'Debug', "OTA heartbeat - skip %s Not firmwar update for that product ManufCode: %s" %(iterDev,manufCode ))
                     continue
 
                 upgradable = False
