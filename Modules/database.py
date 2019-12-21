@@ -199,11 +199,18 @@ def importDeviceConfV2( self ):
                 filename = model_directory + '/' + model_device
                 Domoticz.Log("--------> Opening: %s" %filename)
                 with open( filename, 'rt') as handle:
-                    model_definition = json.load( handle )
+                    try:
+                        model_definition = json.load( handle )
+                    except ValueError: 
+                        Domoticz.Error("--> JSON ConfFile: %s load failed" %sfilename)
+                    except Exception as e:
+                        Domoticz.Error("--> JSON ConfFile: %s load general error: %s" %(sfilename, e))
+
+                device_model_name = model_device.rsplit('.',1)[0]
                 Domoticz.Log("------> Model %s Definition: %s" %(model_device, model_definition))
-                if model_device not in self.DeviceConf:
-                    Domoticz.Log("Adding Specific Config for %s" %model_device)
-                    self.DeviceConf[ model_device ] = dict(model_definition)
+                if device_model_name not in self.DeviceConf:
+                    Domoticz.Log("Adding Specific Config for %s" %device_model_name)
+                    self.DeviceConf[ device_model_name ] = dict(model_definition)
 
     for item in self.DeviceConf:
         Domoticz.Log("DeviceConf[%s] : %s" %(item, self.DeviceConf[ item ]))
