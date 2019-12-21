@@ -82,7 +82,7 @@ from Modules.tools import removeDeviceInList, loggingPlugin
 from Modules.output import sendZigateCmd, removeZigateDevice, ZigatePermitToJoin, start_Zigate, setExtendedPANID, setTimeServer, leaveRequest, zigateBlueLed
 from Modules.input import ZigateRead
 from Modules.heartbeat import processListOfDevices
-from Modules.database import importDeviceConf, LoadDeviceList, checkListOfDevice2Devices, checkDevices2LOD, WriteDeviceList
+from Modules.database import importDeviceConf, importDeviceConfV2, LoadDeviceList, checkListOfDevice2Devices, checkDevices2LOD, WriteDeviceList
 from Modules.domoticz import ResetDevice
 from Modules.command import mgtCommand
 from Modules.zigateConsts import HEARTBEAT, CERTIFICATION, MAX_LOAD_ZIGATE, MAX_FOR_ZIGATE_BUZY
@@ -261,7 +261,8 @@ class BasePlugin:
 
 
         #Import DeviceConf.txt
-        importDeviceConf( self ) 
+        #importDeviceConf( self ) 
+        importDeviceConfV2( self )
     
         #if type(self.DeviceConf) is not dict:
         if not isinstance(self.DeviceConf, dict):

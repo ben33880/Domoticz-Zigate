@@ -165,6 +165,50 @@ def importDeviceConf( self ) :
 
     Domoticz.Status("DeviceConf loaded")
 
+
+def importDeviceConfV2( self ):
+
+    from os import listdir
+    from os.path import isfile, isdir, join
+
+    # Read DeviceConf for backward compatibility
+    importDeviceConf( self )
+
+
+    model_certified = self.pluginconf.pluginConf['pluginConfig'] + '/Certified'
+
+    if os.path.isdir( model_certified ):
+        model_brand_list = [ f for f in listdir(model_certified) if isdir(join(model_certified, f))]
+        Domoticz.Log("--> Brand list: %s" %model_brand_list)
+    
+        for brand in model_brand_list:
+            if brand in ( 'README.md', '.PRECIOUS' ):
+                continue
+            Domoticz.Log("----> Brand: %s" %brand)
+    
+            model_directory = model_certified + '/' + brand 
+            Domoticz.Log("----> List in %s : %s" %(model_directory, listdir(model_directory)))
+
+            model_list = [ f for f in listdir(model_directory) if isfile(join(model_directory, f))]
+         
+            Domoticz.Log("------> List of Model: %s" %model_list)
+            for model_device in model_list:
+                if model_device in ( 'README.md', '.PRECIOUS' ):
+                    continue
+     
+                filename = model_directory + '/' + model_device
+                Domoticz.Log("--------> Opening: %s" %filename)
+                with open( filename, 'rt') as handle:
+                    model_definition = json.load( handle )
+                Domoticz.Log("------> Model %s Definition: %s" %(model_device, model_definition))
+                if model_device not in self.DeviceConf:
+                    Domoticz.Log("Adding Specific Config for %s" %model_device)
+                    self.DeviceConf[ model_device ] = dict(model_definition)
+
+    for item in self.DeviceConf:
+        Domoticz.Log("DeviceConf[%s] : %s" %(item, self.DeviceConf[ item ]))
+
+
 def checkDevices2LOD( self, Devices):
 
     for nwkid in self.ListOfDevices:
