@@ -202,9 +202,11 @@ def importDeviceConfV2( self ):
                     try:
                         model_definition = json.load( handle )
                     except ValueError: 
-                        Domoticz.Error("--> JSON ConfFile: %s load failed" %sfilename)
+                        Domoticz.Error("--> JSON ConfFile: %s load failed" %filename)
+                        continue
                     except Exception as e:
-                        Domoticz.Error("--> JSON ConfFile: %s load general error: %s" %(sfilename, e))
+                        Domoticz.Error("--> JSON ConfFile: %s load general error: %s" %(filename, e))
+                        continue
 
                 device_model_name = model_device.rsplit('.',1)[0]
                 Domoticz.Log("------> Model %s Definition: %s" %(model_device, model_definition))
