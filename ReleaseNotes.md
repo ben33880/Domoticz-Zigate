@@ -36,6 +36,9 @@
 - [Technical] - Management of Zigate Blue Led. No need to restart plugin. Action taken immediatly from settings
 - [Technical] - Implement pingDevice policy (parameters pingDevices, pingDevicesFeq) . Ping every 3600s and once at plugin startup. The ping is much lighter than using the polling
 - [Technical] - Implement a way to force device status after command initiated. ( forcePollingAfterAction )
+- [Technical] - New way to manage Certified devices and make custom way to Bind and configure reporting
+- [Technical] - When Device in Left status, then Timeout
+- [Hardware] - LEDVANCE SMART+ INDOOR PLUG
 
 
 ##             - 4.5.0 ( Web User Interface ) https://github.com/sasu-drooz/Domoticz-Zigate/releases/tag/4.5.0
