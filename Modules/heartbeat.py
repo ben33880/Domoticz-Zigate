@@ -32,7 +32,7 @@ from Modules.output import  sendZigateCmd,  \
         ReadAttributeRequest_0406, ReadAttributeRequest_0500, ReadAttributeRequest_0502, ReadAttributeRequest_0702, ReadAttributeRequest_000f, ReadAttributeRequest_fc01
 
 from Modules.tools import removeNwkInList, loggingPairing, loggingHeartbeat, mainPoweredDevice
-from Modules.domoticz import CreateDomoDevice
+from Modules.domoticz import CreateDomoDevice, timedOutDevice
 from Modules.zigateConsts import HEARTBEAT, MAX_LOAD_ZIGATE, CLUSTERS_LIST, LEGRAND_REMOTES, LEGRAND_REMOTE_SHUTTER, LEGRAND_REMOTE_SWITCHS
 
 from Classes.IAS import IAS_Zone_Management
@@ -66,7 +66,7 @@ READ_ATTRIBUTES_REQUEST = {
 
 #READ_ATTR_COMMANDS = ( '0006', '0008', '0102' )
 # For now, we just look for On/Off state
-READ_ATTR_COMMANDS = ( '0006', )
+READ_ATTR_COMMANDS = ( '0006', '0201')
 
 # Read Attribute trigger: Every 10"
 # Configure Reporting trigger: Every 15
@@ -539,6 +539,10 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
 
             # Binding devices
             cluster_to_bind = CLUSTERS_LIST
+            if 'Model' in self.ListOfDevices[NWKID]:
+                if self.ListOfDevices[NWKID]['Model'] in self.DeviceConf:
+                    if 'ClusterToBind' in self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]:
+                        cluster_to_bind = self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]['ClusterToBind']             
 
             if legrand:
                 if '0003' not in cluster_to_bind:
@@ -642,8 +646,6 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
 def processListOfDevices( self , Devices ):
     # Let's check if we do not have a command in TimeOut
 
-
-
     self.ZigateComm.checkTOwaitFor()
 
     entriesToBeRemoved = []
@@ -676,7 +678,8 @@ def processListOfDevices( self , Devices ):
             pass
 
         elif status == "Left":
-            # Device has sent a 0x8048 message annoucing its departure (Leave)
+            timedOutDevice( self, Devices, NwkId = NWKID)
+            # Device has sentt a 0x8048 message annoucing its departure (Leave)
             # Most likely we should receive a 0x004d, where the device come back with a new short address
             # For now we will display a message in the log every 1'
             # We might have to remove this entry if the device get not reconnected.
