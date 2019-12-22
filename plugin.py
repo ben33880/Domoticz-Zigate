@@ -182,7 +182,7 @@ class BasePlugin:
 
         self.pluginParameters = dict(Parameters)
         self.pluginParameters['PluginBranch'] = 'beta'
-        self.pluginParameters['PluginVersion'] = '4.6.039'
+        self.pluginParameters['PluginVersion'] = '4.6.040'
         self.pluginParameters['TimeStamp'] = 0
         self.pluginParameters['available'] =  None
         self.pluginParameters['available-firmMajor'] =  None
@@ -377,7 +377,7 @@ class BasePlugin:
                     sendZigateCmd(self, "0026", self.ZigateIEEE + IEEE )
                     Domoticz.Status("onDeviceRemoved - removing Device %s -> %s in Zigate" %(Devices[Unit].Name, IEEE))
                 else:
-                    Domotciz.Error("onDeviceRemoved - too early, Zigate and plugin initialisation not completed")
+                    Domoticz.Error("onDeviceRemoved - too early, Zigate and plugin initialisation not completed")
             else:
                 Domoticz.Status("onDeviceRemoved - device entry %s from Zigate not removed. You need to enable 'allowRemoveZigateDevice' parameter. Do consider that it works only for main powered devices." %Devices[Unit].DeviceID)
 
