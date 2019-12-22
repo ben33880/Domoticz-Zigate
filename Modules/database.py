@@ -174,7 +174,6 @@ def importDeviceConfV2( self ):
     # Read DeviceConf for backward compatibility
     importDeviceConf( self )
 
-
     model_certified = self.pluginconf.pluginConf['pluginConfig'] + '/Certified'
 
     if os.path.isdir( model_certified ):
@@ -204,7 +203,11 @@ def importDeviceConfV2( self ):
                         continue
 
                 device_model_name = model_device.rsplit('.',1)[0]
+                if device_model_name == 'Dimmer switch wo neutral':
+                    device_model_name = 'Dimmer switch w/o neutral'
+
                 if device_model_name not in self.DeviceConf:
+                    Domoticz.Log("--> Config for %s/%s" %( brand, device_model_name))
                     self.DeviceConf[ device_model_name ] = dict(model_definition)
 
 def checkDevices2LOD( self, Devices):
@@ -359,6 +362,9 @@ def CheckDeviceList(self, key, val) :
         for attribute in IMPORT_ATTRIBUTES:
             if attribute in DeviceListVal:
                 self.ListOfDevices[key][ attribute ] = DeviceListVal[ attribute]
+                # Patching unitialize Model to empty
+                if attribute == 'Model' and self.ListOfDevices[key][ attribute ] == {}:
+                    self.ListOfDevices[key][ attribute ] = ''
 
         self.ListOfDevices[key]['Health'] = ''
 
