@@ -328,7 +328,7 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
         return
 
     knownModel = False
-    if self.ListOfDevices[NWKID]['Model'] != {}:
+    if self.ListOfDevices[NWKID]['Model'] != {} and self.ListOfDevices[NWKID]['Model'] != '':
         Domoticz.Status("[%s] NEW OBJECT: %s Model Name: %s" %(RIA, NWKID, self.ListOfDevices[NWKID]['Model']))
         # Let's check if this Model is known
         if self.ListOfDevices[NWKID]['Model'] in self.DeviceConf:
@@ -540,9 +540,10 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
             # Binding devices
             cluster_to_bind = CLUSTERS_LIST
             if 'Model' in self.ListOfDevices[NWKID]:
-                if self.ListOfDevices[NWKID]['Model'] in self.DeviceConf:
-                    if 'ClusterToBind' in self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]:
-                        cluster_to_bind = self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]['ClusterToBind']             
+                if self.ListOfDevices[NWKID]['Model'] != {}:
+                    if self.ListOfDevices[NWKID]['Model'] in self.DeviceConf:
+                        if 'ClusterToBind' in self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]:
+                            cluster_to_bind = self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]['ClusterToBind']             
 
             if legrand:
                 if '0003' not in cluster_to_bind:

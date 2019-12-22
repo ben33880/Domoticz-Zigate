@@ -352,7 +352,7 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
                 skipModel = True
 
         # Do We have Model Name
-        if not skipModel and self.ListOfDevices[key]['Model'] == {}:
+        if not skipModel and ( self.ListOfDevices[key]['Model'] == {} or self.ListOfDevices[key]['Model'] == ''):
             loggingOutput( self, 'Debug', "----> Adding: %s" %'0005', nwkid=key)
             listAttributes.append(0x0005)        # Model Identifier
 
@@ -1015,11 +1015,12 @@ def processConfigureReporting( self, NWKID=None ):
 
         cluster_list = CFG_RPT_ATTRIBUTESbyCLUSTERS
         if 'Model' in self.ListOfDevices[key]:
-            if self.ListOfDevices[key]['Model'] in self.DeviceConf:
-                if 'ConfigureReporting' in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]:
-                    spec_cfgrpt = self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ConfigureReporting']
-                    cluster_list = spec_cfgrpt
-                    loggingOutput( self, 'Debug2', "------> CFG_RPT_ATTRIBUTESbyCLUSTERS updated: %s --> %s" %(key, cluster_list), nwkid=key)
+            if self.ListOfDevices[key]['Model'] != {}:
+                if self.ListOfDevices[key]['Model'] in self.DeviceConf:
+                    if 'ConfigureReporting' in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]:
+                        spec_cfgrpt = self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ConfigureReporting']
+                        cluster_list = spec_cfgrpt
+                        loggingOutput( self, 'Debug2', "------> CFG_RPT_ATTRIBUTESbyCLUSTERS updated: %s --> %s" %(key, cluster_list), nwkid=key)
 
         loggingOutput( self, 'Debug2', "----> configurereporting - processing %s" %key, nwkid=key)
 
@@ -1142,16 +1143,32 @@ def processConfigureReporting( self, NWKID=None ):
                     maxInter = cluster_list[cluster]['Attributes'][attr]['MaxInterval']
                     timeOut = cluster_list[cluster]['Attributes'][attr]['TimeOut']
                     chgFlag = cluster_list[cluster]['Attributes'][attr]['Change']
+            
+                    if self.pluginconf.pluginConf['ConfigureReportingBug']:
+                        # Sending Configur Reporting Attribute One by One
+                        attrList = attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
+                        attrLen = 1
+                        loggingOutput( self, 'Log', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
+                        loggingOutput( self, 'Log', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
+                        datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
+                        datas +=  "%02x" %(attrLen) + attrList
+                        loggingOutput( self, 'Log', "configureReporting - 0120 - %s" %(datas))
+                        sendZigateCmd(self, "0120", datas )
+                    else:
+                        attrList += attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
+                        attrLen += 1
+                        attrDisp.append(attr)
+                        loggingOutput( self, 'Log', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
 
-                    attrList += attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
-                    attrLen += 1
-                    attrDisp.append(attr)
+                if not self.pluginconf.pluginConf['ConfigureReportingBug']:
+                    loggingOutput( self, 'Log', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
+                    loggingOutput( self, 'Log', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
+                    datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
+                    datas +=  "%02x" %(attrLen) + attrList
 
-                loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
-                datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
-                datas +=  "%02x" %(attrLen) + attrList
+                    loggingOutput( self, 'Log', "configureReporting - 0120 - %s" %(datas))
+                    sendZigateCmd(self, "0120", datas )
 
-                sendZigateCmd(self, "0120", datas )
             # End for Cluster
         # End for Ep
     # End for key
