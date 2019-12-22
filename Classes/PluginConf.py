@@ -322,7 +322,10 @@ class PluginConf:
         for theme in SETTINGS:
             for param in SETTINGS[theme]['param']:
                 if self.pluginConf[param] != SETTINGS[theme]['param'][param]['default']:
-                    write_pluginConf[param] = self.pluginConf[param]
+                    if SETTINGS[theme]['param'][param]['type'] == 'hex':
+                        write_pluginConf[param] = '%X' %self.pluginConf[param]
+                    else:
+                        write_pluginConf[param] = self.pluginConf[param]
 
         with open( pluginConfFile , 'wt') as handle:
             json.dump( write_pluginConf, handle, sort_keys=True, indent=2)
