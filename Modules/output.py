@@ -282,7 +282,19 @@ def retreive_ListOfAttributesByCluster( self, key, Ep, cluster ):
 
     targetAttribute = None
 
-    if 'Attributes List' in self.ListOfDevices[key]:
+    # Attribute based on pre-cofnigured list in DeviceConf
+    if 'Model' in self.ListOfDevices[key]:
+        if self.ListOfDevices[key]['Model'] in self.DeviceConf:
+            if 'ReadAttributes' in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]:
+                if cluster in  self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ReadAttributes']:
+                    #Domoticz.Log("-->Attributes based on Configuration")
+                    targetAttribute = []
+                    for attr in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ReadAttributes'][cluster]:
+                        #Domoticz.Log("----> Device: %s Adding Attribute %s for Cluster %s" %(key, attr, cluster))
+                        targetAttribute.append( int(attr,16) )
+
+    # Attribute based on the Attributes List given by the device
+    if targetAttribute is None and 'Attributes List' in self.ListOfDevices[key]:
         if 'Ep' in self.ListOfDevices[key]['Attributes List']:
             if Ep in self.ListOfDevices[key]['Attributes List']['Ep']:
                 if cluster in self.ListOfDevices[key]['Attributes List']['Ep'][Ep]:
@@ -298,12 +310,13 @@ def retreive_ListOfAttributesByCluster( self, key, Ep, cluster ):
                                 if addattr not in targetAttribute:
                                     targetAttribute.append( addattr )
 
+    # Attribute based on default
     if targetAttribute is None:
         loggingOutput( self, 'Debug2', "retreive_ListOfAttributesByCluster: default attributes list for cluster: %s" %cluster, nwkid=key)
         if cluster in ATTRIBUTES:
             targetAttribute = ATTRIBUTES[cluster]
         else:
-            Domoticz.Log("retreive_ListOfAttributesByCluster: Missing Attribute for cluster %s" %cluster)
+            Domoticz.Debug("retreive_ListOfAttributesByCluster: Missing Attribute for cluster %s" %cluster)
             targetAttribute = [ 0x0000 ]
 
     loggingOutput( self, 'Debug', "---- retreive_ListOfAttributesByCluster: List of Attributes for cluster %s : " %(cluster) + " ".join("0x{:04x}".format(num) for num in targetAttribute), nwkid=key)
@@ -332,7 +345,8 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
     EPin = "01"
     EPout = '01'
 
-    # Checking if Ep list is empty, in that case we are in discovery mode and we don't really know what are the EPs we can talk to.
+    # Checking if Ep list is empty, in that case we are in discovery mode and 
+    # we don't really know what are the EPs we can talk to.
     if not fullScope or self.ListOfDevices[key]['Ep'] is None or self.ListOfDevices[key]['Ep'] == {}:
         loggingOutput( self, 'Debug', "--> Not full scope", nwkid=key)
         listAttributes = []
@@ -345,7 +359,7 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
             loggingOutput( self, 'Debug', "----> Adding: %s" %'0004', nwkid=key)
             listAttributes.append(0x0004)
         else:
-            if self.ListOfDevices[key]['Manufacturer'] == 'Legrand' or self.ListOfDevices[key]['Manufacturer Name']:
+            if self.ListOfDevices[key]['Manufacturer'] == 'Legrand':
                 loggingOutput( self, 'Debug', "----> Adding: %s" %'f000', nwkid=key)
                 listAttributes.append(0x4000)
                 listAttributes.append(0xf000)
@@ -357,14 +371,18 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
             listAttributes.append(0x0005)        # Model Identifier
 
         if 'Model' in self.ListOfDevices[key]:
-            if self.ListOfDevices[key]['Model'] != {}:
-                if self.ListOfDevices[key]['Model'] != 'TI0001':
+            if self.ListOfDevices[key]['Model'] != {} and self.ListOfDevices[key]['Model'] != '':
+                readAttr = False
+                if self.ListOfDevices[key]['Model'] in self.DeviceConf:
+                    if 'ReadAttributes' in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]:
+                        if '0000' in  self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ReadAttributes']:
+                            readAttr = True
+                            for attr in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ReadAttributes']['0000']:
+                                listAttributes.append( int( attr , 16))  
+
+                if not readAttr and self.ListOfDevices[key]['Model'] != 'TI0001':
                     loggingOutput( self, 'Debug', "----> Adding: %s" %'000A', nwkid=key)
                     listAttributes.append(0x000A)        # Product Code
-
-                if self.ListOfDevices[key]['Model'] == 'EH-ZB-RTS':
-                    loggingOutput( self, 'Debug', "----> Adding: %s" %'000A', nwkid=key)
-                    listAttributes.append(0xe000)        # SNP.R.04.01.14
 
         if self.ListOfDevices[key]['Ep'] is None or self.ListOfDevices[key]['Ep'] == {}:
             loggingOutput( self, 'Debug', "Request Basic  via Read Attribute request: " + key + " EPout = " + "01, 02, 03, 06, 09" , nwkid=key)
@@ -402,19 +420,6 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
                     listAttributes.append(0xffe1)
                     listAttributes.append(0xffe2)
                     listAttributes.append(0xffe3)
-
-                if self.ListOfDevices[key]['Model'] == 'EH-ZB-RTS': # Schneider Thermostat
-                    loggingOutput( self, 'Log', "Schneider Thermostat----> Adding: %s" %'0x0007, 0x0013, 0xe000, 0xe001, 0xe002', nwkid=key)
-                    listAttributes.append(0x0007)        # Power Source
-                    listAttributes.append(0x0013)        # Alarm Mask
-                    listAttributes.append(0xe000)        # SNP.R.04.01.14
-                    listAttributes.append(0xe001)        # 
-                    listAttributes.append(0xe002)        # 
-                    copylistAttributes= list( listAttributes)
-                    listAttributes = []
-                    for iterAttr in copylistAttributes:
-                        if iterAttr not in ( 0x0003, 0x000f, 0x0015, 0xf000, 0x4000):
-                            listAttributes.append( iterAttr)
 
                 if self.ListOfDevices[key]['Model'] == 'TI0001':
                     copylistAttributes= list( listAttributes)
@@ -486,6 +491,9 @@ def ReadAttributeRequest_0001(self, key):
                     if iterAttr not in ( 0x0000, 0x0001, 0x0003 ):
                         listAttributes.append( iterAttr)
 
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Request Power Config via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0001", listAttributes )
 
@@ -508,6 +516,9 @@ def ReadAttributeRequest_0006_400x(self, key):
         if self.ListOfDevices[key]['Model'] in ( 'RWL021', 'SML001', 'SML002', 'LCT001', 'LTW013' ):
             Domoticz.Log("-----requesting Attribute 0x0006/0x4003 for PowerOn state for device : %s" %key)
             listAttributes.append ( 0x4003 )
+
+    if len(listAttributes) == 0:
+        return
 
     loggingOutput( self, 'Debug', "Request OnOff 0x4000x attributes via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0006", listAttributes)
@@ -534,6 +545,9 @@ def ReadAttributeRequest_0006(self, key):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
 
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Request OnOff status via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0006", listAttributes)
 
@@ -547,10 +561,14 @@ def ReadAttributeRequest_0008(self, key):
     for tmpEp in self.ListOfDevices[key]['Ep']:
             if "0008" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
                     EPout=tmpEp
+
     listAttributes = []
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0008'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
     loggingOutput( self, 'Debug', "Request Control level of shutter via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0008", 0)
 
@@ -568,6 +586,9 @@ def ReadAttributeRequest_0300(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0300'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
 
     loggingOutput( self, 'Debug', "Request Color Temp infos via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0300", listAttributes)
@@ -598,6 +619,10 @@ def ReadAttributeRequest_000C(self, key):
     for tmpEp in self.ListOfDevices[key]['Ep']:
             if "000c" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
                     EPout=tmpEp
+
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Request 0x000c info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "000C", listAttributes)
 
@@ -614,7 +639,10 @@ def ReadAttributeRequest_0100(self, key):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
 
-    loggingOutput( self, 'Log', "Request 0x0100 info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
+    if len(listAttributes) == 0:
+        return
+
+    loggingOutput( self, 'Debug', "Request 0x0100 info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0100", listAttributes)
 
 
@@ -630,6 +658,9 @@ def ReadAttributeRequest_0102(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0102'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
 
     loggingOutput( self, 'Debug', "Request 0x0102 info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0102", listAttributes)
@@ -647,6 +678,10 @@ def ReadAttributeRequest_fc00(self, key):
     for tmpEp in self.ListOfDevices[key]['Ep']:
             if "fc00" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
                     EPout=tmpEp
+
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Request 0xfc00 info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "fc00", listAttributes)
 
@@ -663,6 +698,9 @@ def ReadAttributeRequest_0400(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0400'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
 
     loggingOutput( self, 'Debug', "Illuminance info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0400", listAttributes)
@@ -684,6 +722,9 @@ def ReadAttributeRequest_0402(self, key):
                     continue
             listAttributes.append( iterAttr )
 
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Temperature info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0402", listAttributes)
 
@@ -704,6 +745,9 @@ def ReadAttributeRequest_0403(self, key):
                     continue
             listAttributes.append( iterAttr )
 
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Pression Atm info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0403", listAttributes)
 
@@ -723,6 +767,9 @@ def ReadAttributeRequest_0405(self, key):
                 if self.ListOfDevices[key]['Model'] == 'lumi.light.aqcn02': # Aqara Blulb
                     continue
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
 
     loggingOutput( self, 'Debug', "Humidity info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0405", listAttributes)
@@ -746,6 +793,9 @@ def ReadAttributeRequest_0406(self, key):
                     continue
             listAttributes.append( iterAttr )
 
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Occupancy info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0406", listAttributes)
 
@@ -762,6 +812,10 @@ def ReadAttributeRequest_0500(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0500'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "ReadAttributeRequest_0500 - %s/%s - %s" %(key, EPout, listAttributes), nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0500", listAttributes)
 
@@ -778,6 +832,10 @@ def ReadAttributeRequest_0502(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0502'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "ReadAttributeRequest_0502 - %s/%s - %s" %(key, EPout, listAttributes), nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0502", listAttributes)
 
@@ -797,6 +855,9 @@ def ReadAttributeRequest_0702(self, key):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
 
+    if len(listAttributes) == 0:
+        return
+
     loggingOutput( self, 'Debug', "Request Metering info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "0702", listAttributes)
 
@@ -814,6 +875,9 @@ def ReadAttributeRequest_000f(self, key):
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '000f'):
         if iterAttr not in listAttributes:
             listAttributes.append( iterAttr )
+
+    if len(listAttributes) == 0:
+        return
 
     loggingOutput( self, 'Debug', "Request Metering info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "000f", listAttributes)
@@ -837,6 +901,7 @@ def ReadAttributeRequest_fc01(self, key):
 
     listAttributes = []
     listAttributes.append( 0x0001 )
+
     loggingOutput( self, 'Debug', "Request Legrand info via Read Attribute request: " + key + " EPout = " + EPout + " Attributes: " + str(listAttributes), nwkid=key)
     ReadAttributeReq( self, key, EPin, EPout, "fc01", listAttributes)
 
@@ -1148,25 +1213,25 @@ def processConfigureReporting( self, NWKID=None ):
                         # Sending Configur Reporting Attribute One by One
                         attrList = attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                         attrLen = 1
-                        loggingOutput( self, 'Log', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
-                        loggingOutput( self, 'Log', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
+                        loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
+                        loggingOutput( self, 'Debug', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
                         datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
                         datas +=  "%02x" %(attrLen) + attrList
-                        loggingOutput( self, 'Log', "configureReporting - 0120 - %s" %(datas))
+                        loggingOutput( self, 'Debug', "configureReporting - 0120 - %s" %(datas))
                         sendZigateCmd(self, "0120", datas )
                     else:
                         attrList += attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                         attrLen += 1
                         attrDisp.append(attr)
-                        loggingOutput( self, 'Log', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
+                        loggingOutput( self, 'Debug', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
 
                 if not self.pluginconf.pluginConf['ConfigureReportingBug']:
-                    loggingOutput( self, 'Log', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
-                    loggingOutput( self, 'Log', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
+                    loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
+                    loggingOutput( self, 'Debug', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
                     datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
                     datas +=  "%02x" %(attrLen) + attrList
 
-                    loggingOutput( self, 'Log', "configureReporting - 0120 - %s" %(datas))
+                    loggingOutput( self, 'Debug', "configureReporting - 0120 - %s" %(datas))
                     sendZigateCmd(self, "0120", datas )
 
             # End for Cluster
@@ -1294,12 +1359,18 @@ def rebind_Clusters( self, NWKID):
 
     cluster_to_bind = CLUSTERS_LIST
 
-    if 'Manufacturer Name' in self.ListOfDevices[NWKID]:
-        if self.ListOfDevices[NWKID]['Manufacturer Name'] == 'Legrand':
-            cluster_to_bind.append( '0003' )
+    # User Configuration if exists
+    if 'Model' in self.ListOfDevices[NWKID]:
+        if self.ListOfDevices[NWKID]['Model'] != {}:
+            if self.ListOfDevices[NWKID]['Model'] in self.DeviceConf:
+                if 'ClusterToBind' in self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]:
+                    cluster_to_bind = self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]['ClusterToBind']
 
+    # If Bind information, then remove it
     if 'Bind' in self.ListOfDevices[NWKID]:
         del self.ListOfDevices[NWKID]['Bind']
+
+    # If allow Unbind before Bind, then Unbind
     if self.pluginconf.pluginConf['doUnbindBind']:
         for iterBindCluster in cluster_to_bind:      
             for iterEp in self.ListOfDevices[NWKID]['Ep']:
@@ -1307,6 +1378,7 @@ def rebind_Clusters( self, NWKID):
                     loggingOutput( self, 'Debug', 'Request an Unbind for %s/%s on Cluster %s' %(NWKID, iterEp, iterBindCluster), nwkid=NWKID)
                     unbindDevice( self, self.ListOfDevices[NWKID]['IEEE'], iterEp, iterBindCluster)
 
+    # Bind
     for iterBindCluster in cluster_to_bind:      
         for iterEp in self.ListOfDevices[NWKID]['Ep']:
             if iterBindCluster in self.ListOfDevices[NWKID]['Ep'][iterEp]:
