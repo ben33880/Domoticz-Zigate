@@ -1,4 +1,6 @@
 {
+	"_comment": "Legrand Netatmo Shutter switch with neutral",
+	"_version": "1.0",
 	"Ep":{
 		"01":{
 			"0000":"","0003":"","0004":"","0005":"","0102":"","000f":"","fc01":"","0019":"", "Type":"Venetian"}

@@ -1,4 +1,6 @@
 {
+	"_comment": "Philips Hue Motion (SML001 Indoor, SML002 Outdoor) Sensor",
+	"_version": "1.0",
 	"Ep":{
 		"02":{
 			"0000":"",

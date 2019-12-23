@@ -1,4 +1,6 @@
 {
+	"_comment": "Legrand Netatmo Remote Shutters switch",
+	"_version": "1.0",
 	"Ep":{
 		"01":{
 			"0000":"",

@@ -1,4 +1,6 @@
 {
+	"_comment": "Legrand Netamo Micromodule Switch",
+	"_version": "1.0",
 	"Ep":{
 		"01":{"0003":"","0004":"","0006":"","0005":"","000f":"","fc01":"","0019":"","Type":"Switch"}
 	},

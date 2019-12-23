@@ -1,4 +1,6 @@
 {
+	"_comment": "Legrand Netatmo Remote Single Switch",
+	"_versionn": "1.0",
 	"Ep":{
 		"01":{
 			"0000":"",

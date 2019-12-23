@@ -1,4 +1,6 @@
 {
+	"_comment": "Philips Hue Remote",
+	"_version": "1.0",
 	"Ep":{
 		"02":{
 			"0000":"",
