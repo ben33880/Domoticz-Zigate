@@ -174,16 +174,16 @@ def normalizedReadAttributeReq( self, addr, EpIn, EpOut, Cluster , ListOfAttribu
 
         if  not skipReadAttr and self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] == {} and \
                 self.ListOfDevices[addr]['ReadAttributes']['TimeStamps'][EpOut+'-'+str(Cluster)] != 0:
-            loggingOutput( self, 'Debug', "normalizedReadAttrReq - cannot get Attribute self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
+            loggingOutput( self, 'Debug2', "normalizedReadAttrReq - cannot get Attribute self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
             skipReadAttr = True
         if not skipReadAttr and self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] in ( '86', '8c'):    # 8c Not supported, 86 No cluster match
-            loggingOutput( self, 'Debug', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
+            loggingOutput( self, 'Debug2', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
             skipReadAttr = True
         if not skipReadAttr and self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] != '00' and \
                 self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] != {}:
-            loggingOutput( self, 'Debug', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
+            loggingOutput( self, 'Debug2', "normalizedReadAttrReq - Last status self.ListOfDevices[%s]['ReadAttributes']['Ep'][%s][%s][%s]: %s"
                      %(addr, EpOut, Cluster, Attr, self.ListOfDevices[addr]['ReadAttributes']['Ep'][EpOut][str(Cluster)][Attr] ), nwkid=addr)
             skipReadAttr = True
 
@@ -410,10 +410,6 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
                     listAttributes.append(0xff01)
                     listAttributes.append(0xff02)
 
-                if str(self.ListOfDevices[key]['Model']).find('SML00') != -1:
-                    listAttributes.append(0x0032)
-                    listAttributes.append(0x0033)
-
                 if str(self.ListOfDevices[key]['Model']).find('TS0302') != -1: # Inter Blind Zemismart
                     listAttributes.append(0xfffd)
                     listAttributes.append(0xfffe)
@@ -513,7 +509,7 @@ def ReadAttributeRequest_0006_400x(self, key):
     listAttributes = []
 
     if 'Model' in self.ListOfDevices[key]:
-        if self.ListOfDevices[key]['Model'] in ( 'RWL021', 'SML001', 'SML002', 'LCT001', 'LTW013' ):
+        if self.ListOfDevices[key]['Model'] in ( 'LCT001', 'LTW013' ):
             Domoticz.Log("-----requesting Attribute 0x0006/0x4003 for PowerOn state for device : %s" %key)
             listAttributes.append ( 0x4003 )
 
@@ -671,10 +667,6 @@ def ReadAttributeRequest_fc00(self, key):
     EPout= "01"
     listAttributes = []
 
-    if 'Model' in self.ListOfDevices[key]:
-        if self.ListOfDevices[key]['Model'] == 'RWL02': # Hue dimmer Switch
-            listAttributes.append(0x0000)
-
     for tmpEp in self.ListOfDevices[key]['Ep']:
             if "fc00" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
                     EPout=tmpEp
@@ -783,9 +775,7 @@ def ReadAttributeRequest_0406(self, key):
             if "0406" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
                     EPout=tmpEp
     listAttributes = []
-    if str(self.ListOfDevices[key]['Model']).find('SML00') != -1:
-         listAttributes.append(0x0030)
-         #listAttributes.append(0x0033)
+
     for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0406'):
         if iterAttr not in listAttributes:
             if 'Model' in self.ListOfDevices[key]:
@@ -1213,17 +1203,17 @@ def processConfigureReporting( self, NWKID=None ):
                         # Sending Configur Reporting Attribute One by One
                         attrList = attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                         attrLen = 1
-                        loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
-                        loggingOutput( self, 'Debug', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
+                        loggingOutput( self, 'Log', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
+                        loggingOutput( self, 'Log', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
                         datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
                         datas +=  "%02x" %(attrLen) + attrList
-                        loggingOutput( self, 'Debug', "configureReporting - 0120 - %s" %(datas))
+                        loggingOutput( self, 'Log', "configureReporting - 0120 - %s" %(datas))
                         sendZigateCmd(self, "0120", datas )
                     else:
                         attrList += attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                         attrLen += 1
                         attrDisp.append(attr)
-                        loggingOutput( self, 'Debug', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
+                        loggingOutput( self, 'Log', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
 
                 if not self.pluginconf.pluginConf['ConfigureReportingBug']:
                     loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
