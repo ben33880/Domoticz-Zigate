@@ -239,7 +239,7 @@ def initDeviceInList(self, Nwkid) :
             self.ListOfDevices[Nwkid]['RIA']="0"
             self.ListOfDevices[Nwkid]['RSSI']={}
             self.ListOfDevices[Nwkid]['Battery']={}
-            self.ListOfDevices[Nwkid]['Model']={}
+            self.ListOfDevices[Nwkid]['Model']= ''
             self.ListOfDevices[Nwkid]['MacCapa']={}
             self.ListOfDevices[Nwkid]['IEEE']={}
             self.ListOfDevices[Nwkid]['Type']={}
