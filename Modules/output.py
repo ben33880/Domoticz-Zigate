@@ -1203,17 +1203,17 @@ def processConfigureReporting( self, NWKID=None ):
                         # Sending Configur Reporting Attribute One by One
                         attrList = attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                         attrLen = 1
-                        loggingOutput( self, 'Log', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
-                        loggingOutput( self, 'Log', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
+                        loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
+                        loggingOutput( self, 'Debug', "-->  Len: %s Attribute List: %s" %(attrLen, attrList), nwkid=key)
                         datas =   addr_mode + key + "01" + Ep + cluster + direction + manufacturer_spec + manufacturer 
                         datas +=  "%02x" %(attrLen) + attrList
-                        loggingOutput( self, 'Log', "configureReporting - 0120 - %s" %(datas))
+                        loggingOutput( self, 'Debug', "configureReporting - 0120 - %s" %(datas))
                         sendZigateCmd(self, "0120", datas )
                     else:
                         attrList += attrdirection + attrType + attr + minInter + maxInter + timeOut + chgFlag
                         attrLen += 1
                         attrDisp.append(attr)
-                        loggingOutput( self, 'Log', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
+                        loggingOutput( self, 'Debug', "----> Adding attr: %s attrType: %s minInter: %s maxInter: %s timeOut: %s chgFlag: %s" %(attr, attrType, minInter, maxInter, timeOut, chgFlag), nwkid=key)
 
                 if not self.pluginconf.pluginConf['ConfigureReportingBug']:
                     loggingOutput( self, 'Debug', "Configure Reporting %s/%s on cluster %s" %(key, Ep, cluster), nwkid=key)
