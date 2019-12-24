@@ -207,8 +207,10 @@ def importDeviceConfV2( self ):
                     device_model_name = 'Dimmer switch w/o neutral'
 
                 if device_model_name not in self.DeviceConf:
-                    Domoticz.Log("--> Config for %s/%s" %( brand, device_model_name))
+                    Domoticz.Status("--> Config for %s/%s" %( brand, device_model_name))
                     self.DeviceConf[ device_model_name ] = dict(model_definition)
+                else:
+                    Domoticz.Log("--> Config for %s/%s not loaded as already defined")
 
 def checkDevices2LOD( self, Devices):
 
