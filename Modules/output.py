@@ -2038,6 +2038,7 @@ def legrand_fc01( self, nwkid, command, OnOff):
     LEGRAND_CLUSTER_FC01 = {
             'Dimmer switch w/o neutral':  { 'EnableLedInDark': '0001'  , 'EnableDimmer': '0000'   , 'EnableLedIfOn': '0002' },
             'Connected outlet': { 'EnableLedIfOn': '0002' },
+            'Mobile outlet': { 'EnableLedIfOn': '0002' },
             'Shutter switch with neutral': { 'EnableLedIfOn': '0001' },
             'Micromodule switch': { 'None': 'None' },
             'Cable outlet': { 'FilPilote': '0000' } }

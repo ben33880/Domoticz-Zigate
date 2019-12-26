@@ -15,6 +15,7 @@ One directory per brand/manufacturer
 * ClusterToBind 	List of Cluster to bind in the right order (Optional)
 * ReadAttribute 	List Cluster and for each , list of Attributes to read during polling (Optional)
 * ConfigureReporting 	 List of Cluster and for each, list of Attribute and parameters for seting Configure Reporting (Optional)
+* GroupMembership       List the Groups the devices must be member of.
 
 
 ### How does it impact the plugin behaviour

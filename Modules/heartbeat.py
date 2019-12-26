@@ -630,13 +630,18 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
                 self.DiscoveryDevices[NWKID]['CaptureProcess']['ListOfDevice'] = dict( self.ListOfDevices[NWKID] )
 
             # 4- Create groups if required
-            if legrand and self.pluginconf.pluginConf['LegrandGroups'] and self.groupmgt:
-                if self.ListOfDevices[NWKID]['Model'] == 'Connected outlet':
-                    self.groupmgt.manageLegrandGroups( NWKID, '01', 'Plug')
-                elif self.ListOfDevices[NWKID]['Model'] == 'Dimmer switch w/o neutral':
-                    self.groupmgt.manageLegrandGroups( NWKID, '01', 'Switch')
-                elif self.ListOfDevices[NWKID]['Model'] == 'Micromodule switch':
-                    self.groupmgt.manageLegrandGroups( NWKID, '01', 'Switch')
+            if self.groupmgt and self.pluginconf.pluginConf['allowGroupMembership'] and 'Model' in self.ListOfDevices[NWKID]:
+                Domoticz.Log("Creation Group")
+                if self.ListOfDevices[NWKID]['Model'] in self.DeviceConf:
+                    Domoticz.Log("--> In Device Conf")
+                    if 'GroupMembership' in self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]:
+                        Domoticz.Log("----> with GroupMemberShip")
+                        for groupToAdd in self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]['GroupMembership']:
+                            Domoticz.Log("------> adding groupmemebership %s -- %s" %(NWKID, str(groupToAdd)))
+                            if len( groupToAdd ) == 2:
+                                self.groupmgt.addGroupMembership( NWKID, groupToAdd[0], groupToAdd[1] )
+                            else:
+                                Domoticz.Error("Uncorrect GroupMembership definition %s" %str(self.DeviceConf[ self.ListOfDevices[NWKID]['Model'] ]['GroupMembership']))
 
             writeDiscoveryInfos( self )
 

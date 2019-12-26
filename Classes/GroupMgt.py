@@ -1073,7 +1073,19 @@ class GroupsManagement(object):
 
         if nwkid not in self.ListOfGroups:
             return
-        for iterDev, iterEp, iterIEEE in self.ListOfGroups[nwkid]['Devices']:
+
+        for iterDevice in self.ListOfGroups[nwkid]['Devices']:
+            if len(iterDevice) == 2:
+                iterDev, iterEp = iterDevice
+                if iterDev in self.ListOfDevices:
+                    if 'IEEE' in self.ListOfDevices[iterDev]:
+                        iterIEEE = self.ListOfDevices[iterDev]['IEEE']
+            elif len(iterDevice) == 3:
+                iterDev, iterEp, iterIEEE = iterDevice
+            else:
+                Domoticz.Error("Group - processCommand - Error unexpected item: %s" %str(iterDevice))
+                return
+
             self.logging( 'Debug', 'processCommand - reset heartbeat for device : %s' %iterDev)
             if iterDev not in self.ListOfDevices:
                 if iterIEEE in self.IEEE2NWK:
@@ -1237,39 +1249,27 @@ class GroupsManagement(object):
             sValue = str(Level)
             self.Devices[unit].Update(nValue=int(nValue), sValue=str(sValue), Color=Color_) 
 
-    def manageLegrandGroups( self, device_addr, device_ep, unittype):
-        """
-        Will add group Membership to recently paired device
+    def addGroupMembership( self, device_addr, device_ep, grp_id):
 
-        fff7: Home (Master Remote)
-        fff6: Away (Master Remote)
-        fff5:
-        fff4: 
-        """
-
-        LEGRAND_GROUPS = {
-                    'Plug': ( 'fff7', 'fff5'),
-                    'Switch': ( 'fff6', 'fff4')
-                    }
-
+        if device_addr not in self.ListOfDevices:
+            return
+        if 'IEEE' not in self.ListOfDevices[device_addr]:
+            return
         device_ieee = self.ListOfDevices[device_addr]['IEEE']
-        if unittype in LEGRAND_GROUPS:
-            for grp_id in LEGRAND_GROUPS[unittype]:
+        if grp_id not in self.ListOfGroups:
+            self.ListOfGroups[grp_id] = {}
+            self.ListOfGroups[grp_id]['Name'] = 'Group ' + str(grp_id)
+            self.ListOfGroups[grp_id]['Devices'] = []
 
-                if grp_id not in self.ListOfGroups:
-                    self.ListOfGroups[grp_id] = {}
-                    self.ListOfGroups[grp_id]['Name'] = 'Legrand Plug-in'
-                    self.ListOfGroups[grp_id]['Devices'] = []
+        if ( device_addr, device_ep, device_ieee) not in self.ListOfGroups[grp_id]['Devices']:
+                self.ListOfGroups[grp_id]['Devices'].append( ( device_addr, device_ep, device_ieee) )
+                Domoticz.Log("Adding %s groupmembership to device: %s/%s" %(grp_id, device_addr, device_ep))
+                self._addGroup( device_ieee, device_addr, device_ep, grp_id)
 
-                if ( device_addr, device_ep, device_ieee) not in self.ListOfGroups[grp_id]['Devices']:
-                    self.ListOfGroups[grp_id]['Devices'].append( ( device_addr, device_ep, device_ieee) )
-                    Domoticz.Log("Adding %s groupmembership to device: %s/%s" %(grp_id, device_addr, device_ep))
-                    self._addGroup( device_ieee, device_addr, device_ep, grp_id)
-
-            for filename in ( self.json_groupsConfigFilename, self.groupListFileName ):
-                if os.path.isfile( filename ):
-                    self.logging( 'Log', "rest_rescan_group - Removing file: %s" %filename )
-                    os.remove( filename )
+        for filename in ( self.json_groupsConfigFilename, self.groupListFileName ):
+            if os.path.isfile( filename ):
+                self.logging( 'Log', "rest_rescan_group - Removing file: %s" %filename )
+                os.remove( filename )
 
     def manageIkeaTradfriRemoteLeftRight( self, addr, type_dir):
 
