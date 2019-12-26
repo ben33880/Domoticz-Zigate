@@ -256,8 +256,10 @@ def Decode8000_v2(self, Devices, MsgData, MsgRSSI) : # Status
     SEQ=MsgData[2:4]
     PacketType=MsgData[4:8]
 
-    if   Status=="00" : 
-        Status="Success"
+    if self.pluginconf.pluginConf['debugzigateCmd']:
+        loggingInput( self, 'Log', "Decode8000    - %s      Status: %s" %( PacketType, Status))
+
+    if   Status=="00" : Status="Success"
     elif Status=="01" : Status="Incorrect Parameters"
     elif Status=="02" : Status="Unhandled Command"
     elif Status=="03" : Status="Command Failed"
@@ -265,7 +267,6 @@ def Decode8000_v2(self, Devices, MsgData, MsgRSSI) : # Status
     elif Status=="05" : Status="Stack Already Started"
     elif int(Status,16) >= 128 and int(Status,16) <= 244 : Status="ZigBee Error Code "+ DisplayStatusCode(Status)
 
-    loggingInput( self, 'Debug', "Decode8000_v2 - status: " + Status + " SEQ: " + SEQ + " Packet Type: " + PacketType )
 
     if   PacketType=="0012" : Domoticz.Log("Erase Persistent Data cmd status : " +  Status )
     elif PacketType=="0024" : Domoticz.Log("Start Network status : " +  Status )
@@ -277,7 +278,7 @@ def Decode8000_v2(self, Devices, MsgData, MsgRSSI) : # Status
         self.groupmgt.statusGroupRequest( MsgData )
 
     if str(MsgData[0:2]) != "00" :
-        loggingInput( self, 'Log', "Decode8000 - PacketType: %s Status: [%s] - %s" \
+        loggingInput( self, 'Debug', "Decode8000 - PacketType: %s Status: [%s] - %s" \
                 %(PacketType, MsgData[0:2], Status))
 
     return
@@ -896,10 +897,10 @@ def Decode8042(self, Devices, MsgData, MsgRSSI) : # Node Descriptor response
             self.DiscoveryDevices[addr]['PowerSource'] = str(PowerSource)
             self.DiscoveryDevices[addr]['ReceiveOnIdle'] = str(ReceiveonIdle)
 
-    if 'Model' in self.ListOfDevices[addr]:
-        if self.ListOfDevices[addr]['Model'] != {}:
-            if self.ListOfDevices[addr]['Model'] == 'TI0001':
-                return
+    #if 'Model' in self.ListOfDevices[addr]:
+    #    if self.ListOfDevices[addr]['Model'] != {}:
+    #        if self.ListOfDevices[addr]['Model'] == 'TI0001':
+    #            return
 
     self.ListOfDevices[addr]['Manufacturer']=manufacturer
     self.ListOfDevices[addr]['DeviceType']=str(DeviceType)
@@ -1816,13 +1817,6 @@ def Decode004D(self, Devices, MsgData, MsgRSSI) : # Reception Device announce
         # Reset the device Hearbeat, This should allow to trigger Read Request
         self.ListOfDevices[MsgSrcAddr]['Heartbeat'] = 0
 
-        # In case of livolo redo the bind if enabled in the Settings
-        if not self.pluginconf.pluginConf['enableSchneiderWiser'] and self.pluginconf.pluginConf['rebindLivolo']:
-                PREFIX_MACADDR_LIVOLO = '00124b00'
-                if MsgIEEE[0:len(PREFIX_MACADDR_LIVOLO)] == PREFIX_MACADDR_LIVOLO:
-                    loggingInput( self,"reBind Livolo", MsgSrcAddr)
-                    livolo_bind( self, MsgSrcAddr, '06')
-
         # If this is a rejoin after a leave, let's update the Status
         if self.ListOfDevices[MsgSrcAddr]['Status'] == 'Left':
             loggingInput( self, 'Debug', "Decode004D -  %s Status from Left to inDB" %( MsgSrcAddr), MsgSrcAddr)
@@ -1831,10 +1825,6 @@ def Decode004D(self, Devices, MsgData, MsgRSSI) : # Reception Device announce
         # Redo the binding if allow
         if 'Model' in self.ListOfDevices[MsgSrcAddr]:
             if self.ListOfDevices[MsgSrcAddr]['Model'] != {}:
-                if self.ListOfDevices[MsgSrcAddr]['Model'] == 'TI0001':
-                    # If Livolo, no rebind, nothing more
-                    loggingInput( self, 'Debug', "Decode004D - Livolo, no rebind, just exit" , MsgSrcAddr)
-                    return
                 if self.ListOfDevices[MsgSrcAddr]['Model'] in LEGRAND_REMOTES:
                     # If Remote Legrand skip, but do req Battery infos
                     loggingInput( self, 'Debug', "Decode004D - Legrand remote, no rebind, just exit" , MsgSrcAddr)
@@ -1855,16 +1845,7 @@ def Decode004D(self, Devices, MsgData, MsgRSSI) : # Reception Device announce
 
         if self.pluginconf.pluginConf['allowReBindingClusters']:
             loggingInput( self, 'Debug', "Decode004D - Request rebind clusters for %s" %( MsgSrcAddr), MsgSrcAddr)
-            reBind = True
-            #if 'Manufacturer Name' in self.ListOfDevices[MsgSrcAddr]:
-            #    if self.ListOfDevices[MsgSrcAddr]['Manufacturer Name'] == 'OSRAM':
-            #        reBind = False
-            #if reBind and 'Manufacturer' in  self.ListOfDevices[MsgSrcAddr]:
-            #    if self.ListOfDevices[MsgSrcAddr]['Manufacturer'] == 'bbaa':
-            #        reBind = False
-
-            if reBind:
-                rebind_Clusters( self, MsgSrcAddr)
+            rebind_Clusters( self, MsgSrcAddr)
     
             # As we are redo bind, we need to redo the Configure Reporting
             if 'ConfigureReporting' in self.ListOfDevices[MsgSrcAddr]:
@@ -1878,6 +1859,8 @@ def Decode004D(self, Devices, MsgData, MsgRSSI) : # Reception Device announce
             sendZigateCmd(self,"0042", str(MsgSrcAddr) )
     else:
         # New Device coming for provisioning
+
+        # There is a dilem here as Livolo and Schneider Wiser share the same IEEE prefix.
         if not self.pluginconf.pluginConf['enableSchneiderWiser']:
             PREFIX_MACADDR_LIVOLO = '00124b00'
             if MsgIEEE[0:len(PREFIX_MACADDR_LIVOLO)] == PREFIX_MACADDR_LIVOLO:

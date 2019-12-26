@@ -116,7 +116,10 @@ def zigateBlueLed( self, OnOff):
 
 def sendZigateCmd(self, cmd,datas ):
 
-    loggingOutput( self, 'Debug', "=====> sendZigateCmd - %s %s Queue Length: %s" %(cmd, datas, len(self.ZigateComm.zigateSendingFIFO)), 'ffff')
+    if self.pluginconf.pluginConf['debugzigateCmd']:
+        loggingOutput( self, 'Log', "sendZigateCmd - %s %s Queue Length: %s" %(cmd, datas, len(self.ZigateComm.zigateSendingFIFO)), 'ffff')
+    else:
+        loggingOutput( self, 'Debug', "=====> sendZigateCmd - %s %s Queue Length: %s" %(cmd, datas, len(self.ZigateComm.zigateSendingFIFO)), 'ffff')
     self.ZigateComm.sendData( cmd, datas )
 
 def ReadAttributeReq( self, addr, EpIn, EpOut, Cluster , ListOfAttributes ):
@@ -380,9 +383,9 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
                             for attr in self.DeviceConf[ self.ListOfDevices[key]['Model'] ]['ReadAttributes']['0000']:
                                 listAttributes.append( int( attr , 16))  
 
-                if not readAttr and self.ListOfDevices[key]['Model'] != 'TI0001':
-                    loggingOutput( self, 'Debug', "----> Adding: %s" %'000A', nwkid=key)
-                    listAttributes.append(0x000A)        # Product Code
+                #if not readAttr and self.ListOfDevices[key]['Model'] != 'TI0001':
+                #    loggingOutput( self, 'Debug', "----> Adding: %s" %'000A', nwkid=key)
+                #    listAttributes.append(0x000A)        # Product Code
 
         if self.ListOfDevices[key]['Ep'] is None or self.ListOfDevices[key]['Ep'] == {}:
             loggingOutput( self, 'Debug', "Request Basic  via Read Attribute request: " + key + " EPout = " + "01, 02, 03, 06, 09" , nwkid=key)
@@ -417,12 +420,12 @@ def ReadAttributeRequest_0000(self, key, fullScope=True):
                     listAttributes.append(0xffe2)
                     listAttributes.append(0xffe3)
 
-                if self.ListOfDevices[key]['Model'] == 'TI0001':
-                    copylistAttributes= list( listAttributes)
-                    listAttributes = []
-                    for iterAttr in copylistAttributes:
-                        if iterAttr not in ( 0x000a, 0x000f, 0x0015, 0x4000, 0xf000, 0x0001, 0x0002  ):
-                            listAttributes.append( iterAttr)
+                #if self.ListOfDevices[key]['Model'] == 'TI0001':
+                #    copylistAttributes= list( listAttributes)
+                #    listAttributes = []
+                #    for iterAttr in copylistAttributes:
+                #        if iterAttr not in ( 0x000a, 0x000f, 0x0015, 0x4000, 0xf000, 0x0001, 0x0002  ):
+                #            listAttributes.append( iterAttr)
 
         for tmpEp in self.ListOfDevices[key]['Ep']:
             if "0000" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
@@ -496,11 +499,11 @@ def ReadAttributeRequest_0001(self, key):
 def ReadAttributeRequest_0006_400x(self, key):
     loggingOutput( self, 'Debug', "ReadAttributeRequest_0006 focus on 0x4000x attributes- Key: %s " %key, nwkid=key)
 
-    if 'Model' in self.ListOfDevices[key]:
-        if self.ListOfDevices[key]['Model'] != {}:
-            if self.ListOfDevices[key]['Model'] == 'TI0001':
-                loggingOutput( self, 'Debug', "ReadAttributeRequest_0006 - Skip Key: %s for Livolo Switch" %key, nwkid=key)
-                return
+    #if 'Model' in self.ListOfDevices[key]:
+    #    if self.ListOfDevices[key]['Model'] != {}:
+    #        if self.ListOfDevices[key]['Model'] == 'TI0001':
+    #            loggingOutput( self, 'Debug', "ReadAttributeRequest_0006 - Skip Key: %s for Livolo Switch" %key, nwkid=key)
+    #            return
     EPin = "01"
     EPout= "01"
     for tmpEp in self.ListOfDevices[key]['Ep']:
@@ -525,11 +528,11 @@ def ReadAttributeRequest_0006(self, key):
 
     loggingOutput( self, 'Debug', "ReadAttributeRequest_0006 - Key: %s " %key, nwkid=key)
 
-    if 'Model' in self.ListOfDevices[key]:
-        if self.ListOfDevices[key]['Model'] != {}:
-            if self.ListOfDevices[key]['Model'] == 'TI0001':
-                loggingOutput( self, 'Debug', "ReadAttributeRequest_0006 - Skip Key: %s for Livolo Switch" %key, nwkid=key)
-                return
+    #if 'Model' in self.ListOfDevices[key]:
+    #    if self.ListOfDevices[key]['Model'] != {}:
+    #        if self.ListOfDevices[key]['Model'] == 'TI0001':
+    #            loggingOutput( self, 'Debug', "ReadAttributeRequest_0006 - Skip Key: %s for Livolo Switch" %key, nwkid=key)
+    #            return
 
     EPin = "01"
     EPout= "01"
@@ -1059,9 +1062,9 @@ def processConfigureReporting( self, NWKID=None ):
                 if self.ListOfDevices[key]['Health'] == 'Not Reachable':
                     continue
 
-            if self.ListOfDevices[key]['Model'] != {}:
-                if self.ListOfDevices[key]['Model'] == 'TI0001': # Livolo switch
-                    continue
+            #if self.ListOfDevices[key]['Model'] != {}:
+            #    if self.ListOfDevices[key]['Model'] == 'TI0001': # Livolo switch
+            #        continue
 
         cluster_list = CFG_RPT_ATTRIBUTESbyCLUSTERS
         if 'Model' in self.ListOfDevices[key]:
