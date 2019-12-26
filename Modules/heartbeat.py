@@ -154,9 +154,9 @@ def processKnownDevices( self, Devices, NWKID ):
                     self.ListOfDevices[NWKID]['ReadAttributes']['Ep'] = {}
 
                 if 'Model' in self.ListOfDevices[NWKID]:
-                    if self.ListOfDevices[NWKID]['Model'] == 'TI0001':
-                        # Don't do it for Livolo
-                        continue
+                    #if self.ListOfDevices[NWKID]['Model'] == 'TI0001':
+                    #    # Don't do it for Livolo
+                    #    continue
                     if self.ListOfDevices[NWKID]['Model'] == 'lumi.ctrl_neutral1' and tmpEp != '02': # All Eps other than '02' are blacklisted
                         continue
                     if  self.ListOfDevices[NWKID]['Model'] == 'lumi.ctrl_neutral2' and tmpEp not in ( '02' , '03' ):
@@ -341,10 +341,10 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
         # Patch to make Livolo working
         # https://zigate.fr/forum/topic/livolo-compatible-zigbee/#postid-596
         if self.ListOfDevices[NWKID]['Model'] == 'TI0001':
-            if 'MacCapa' in self.ListOfDevices[NWKID]:
-                    self.ListOfDevices[NWKID]['MacCapa'] = '8e'
-                    self.ListOfDevices[NWKID]['PowerSource'] = 'Main'
-                    self.ListOfDevices[NWKID]['LogicalType'] = 'Router'
+            #if 'MacCapa' in self.ListOfDevices[NWKID]:
+            #        self.ListOfDevices[NWKID]['MacCapa'] = '8e'
+            #        self.ListOfDevices[NWKID]['PowerSource'] = 'Main'
+            #        self.ListOfDevices[NWKID]['LogicalType'] = 'Router'
             livolo_bind( self, NWKID, '06')
 
     waitForDomoDeviceCreation = False
