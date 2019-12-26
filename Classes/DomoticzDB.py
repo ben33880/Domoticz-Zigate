@@ -20,22 +20,36 @@ CACHE_TIMEOUT = ((15 * 60) + 15)   # num seconds
 
 class DomoticzDB_Preferences:
 
-    def __init__(self, database):
+    def __init__(self, database, pluginconf):
         self.dbConn = None
         self.dbCursor = None
         self.preferences = None
         self.WebUserName = None
         self.WebPassword = None
         self.database = database
+        self.debugDZDB = None
+        self.pluginconf = pluginconf
 
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( database ) :
             return 
 
+    def logging( self, logType, message):
+
+        self.debugDZDB = self.pluginconf.pluginConf['debugDZDB']
+
+        if logType == 'Debug' and self.debugDZDB:
+            Domoticz.Log( message)
+        elif logType == 'Log':
+            Domoticz.Log( message )
+        elif logType == 'Status':
+            Domoticz.Status( message)
+        return
+
 
     def _openDB( self):
 
-        #Domoticz.Log("Opening %s" %self.database)
+        self.logging( "Debug", "DB_Preferences - Opening %s" %self.database)
         try:
             self.dbConn = sqlite3.connect(self.database)
             self.dbCursor = self.dbConn.cursor()
@@ -49,7 +63,7 @@ class DomoticzDB_Preferences:
     def closeDB( self ):
 
         if self.dbConn is not None:
-            Domoticz.Debug("Closing %s" %self.database)
+            self.logging( "Debug", "DB_Preferences - Closing %s" %self.database)
             self.dbConn.close()
 
 
@@ -162,27 +176,42 @@ class DomoticzDB_Preferences:
 
 class DomoticzDB_Hardware:
 
-    def __init__(self, database, hardwareID ):
+    def __init__(self, database, pluginconf, hardwareID ):
         self.Devices = {}
         self.dbConn = None
         self.dbCursor = None
         self.HardwareID = hardwareID
         self.database = database
+        self.debugDZDB = None
+        self.pluginconf = pluginconf
 
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( database ) :
             return
 
+    def logging( self, logType, message):
+
+        self.debugDZDB = self.pluginconf.pluginConf['debugDZDB']
+
+        if logType == 'Debug' and self.debugDZDB:
+            Domoticz.Log( message)
+        elif logType == 'Log':
+            Domoticz.Log( message )
+        elif logType == 'Status':
+            Domoticz.Status( message)
+        return
+
+
     def _openDB( self ):
 
-        Domoticz.Debug("Opening %s" %self.database)
+        self.logging( "Debug", "DB_Hardware - Opening %s" %self.database)
         self.dbConn = sqlite3.connect(self.database)
         self.dbCursor = self.dbConn.cursor()
 
     def closeDB( self ):
 
         if self.dbConn is not None:
-            Domoticz.Debug("Closing %s" %self.database)
+            self.logging( "Debug", "DB_Hardware Closing %s" %self.database)
             self.dbConn.close()
 
     def disableErasePDM( self):
@@ -208,37 +237,57 @@ class DomoticzDB_Hardware:
 
 class DomoticzDB_DeviceStatus:
 
-    def __init__(self, database, hardwareID ):
-        Domoticz.Debug("DomoticzDB_DeviceStatus - Init")
+    def __init__(self, database, pluginconf, hardwareID ):
         self.database = database
         self.Devices = {}
         self.dbConn = None
         self.dbCursor = None
         self.HardwareID = hardwareID
+        self.debugDZDB = None
+        self.pluginconf = pluginconf
 
         self.AdjValue = {}
         self.AdjValue['Baro'] = {}
         self.AdjValue['TimeOutMotion'] = {}
         self.AdjValue['Temp'] = {}
 
+        Domoticz.Log("INIT- self.pluginconf: %s" %(str(self.pluginconf)))
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( database ) :
             return
+
+    def logging( self, logType, message):
+
+        self.debugDZDB = self.pluginconf.pluginConf['debugDZDB']
+
+        if logType == 'Debug' and self.debugDZDB:
+            Domoticz.Log( message)
+        elif logType == 'Log':
+            Domoticz.Log( message )
+        elif logType == 'Status':
+            Domoticz.Status( message)
+        return
+
 
     def _openDB( self):
 
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( self.database ) :
             return
-        Domoticz.Debug("Opening %s" %self.database)
+
+        self.logging( "Debug", "DB_DeviceStatus - Opening %s" %self.database)
         self.dbConn = sqlite3.connect(self.database)
+        self.logging( "Debug", "-----> dbConn: %s" %str(self.dbConn))
         self.dbCursor = self.dbConn.cursor()
+        self.logging( "Debug", "-----> dbCursor: %s" %str(self.dbCursor))
 
     def closeDB( self ):
 
         if self.dbConn is not None:
-            Domoticz.Debug("Closing %s" %self.database)
+            self.logging( "Debug", "DB_DeviceStatus - Closing %s" %self.database)
             self.dbConn.close()
+            self.dbConn = None
+            self.dbCursor = None
 
 
     def retreiveAddjValue_baro( self, ID):
@@ -247,21 +296,21 @@ class DomoticzDB_DeviceStatus:
         """
 
         if ID not in self.AdjValue['Baro']:
-            Domoticz.Debug("Init Baro cache")
+            self.logging( "Debug", "Init Baro cache")
             self.AdjValue['Baro'][ID] = {}
             self.AdjValue['Baro'][ID]['Value'] = None
             self.AdjValue['Baro'][ID]['Stamp'] = 0
 
-        Domoticz.Debug("Baro - Value: %s, Stamp: %s, Today: %s" %(self.AdjValue['Baro'][ID]['Value'], self.AdjValue['Baro'][ID]['Stamp'], int(time() )))
+        self.logging( "Debug", "Baro - Value: %s, Stamp: %s, Today: %s" %(self.AdjValue['Baro'][ID]['Value'], self.AdjValue['Baro'][ID]['Stamp'], int(time() )))
         if self.AdjValue['Baro'][ID]['Value'] is not None and (int(time()) < self.AdjValue['Baro'][ID]['Stamp'] + CACHE_TIMEOUT):
-            Domoticz.Debug("Return from Baro cache")
+            self.logging( "Debug", "Return from Baro cache")
             return self.AdjValue['Baro'][ID]['Value']
 
         # We need to look to DB
         if  self.dbCursor is None:
             self._openDB( )
             try:
-                Domoticz.Debug("DB AddjValue2 access for %s" %ID)
+                self.logging( "Debug", "DB AddjValue2 access for %s" %ID)
                 self.dbCursor.execute("SELECT AddjValue2 FROM DeviceStatus WHERE ID = '%s' and HardwareID = '%s'" %(ID, self.HardwareID))
                 value = self.dbCursor.fetchone()
                 if value == None:
@@ -290,7 +339,6 @@ class DomoticzDB_DeviceStatus:
 
             Domoticz.Error("retreiveAddjValue_baro - Unexpected exception for ID: %s HardwareID: Ms" %(ID, self.HardwareID))
             self.closeDB()
-            self.dbCursor = None
             return 0
 
     def retreiveTimeOut_Motion( self, ID):
@@ -299,19 +347,19 @@ class DomoticzDB_DeviceStatus:
         """
 
         if ID not in self.AdjValue['TimeOutMotion']:
-            Domoticz.Debug("Init Timeoud cache")
+            self.logging( "Debug", "Init Timeoud cache")
             self.AdjValue['TimeOutMotion'][ID] = {}
             self.AdjValue['TimeOutMotion'][ID]['Value'] = None
             self.AdjValue['TimeOutMotion'][ID]['Stamp'] = 0
 
         if self.AdjValue['TimeOutMotion'][ID]['Value'] is not None  and ( int(time()) < self.AdjValue['TimeOutMotion'][ID]['Stamp'] + CACHE_TIMEOUT):
-            Domoticz.Debug("Return from Timeout cache")
+            self.logging( "Debug", "Return from Timeout cache")
             return self.AdjValue['TimeOutMotion'][ID]['Value']
 
         if  self.dbCursor is None:
             self._openDB( )
             try:
-                Domoticz.Debug("DB access AddjValue for %s" %ID)
+                self.logging( "Debug", "DB access AddjValue for %s" %ID)
                 self.dbCursor.execute("SELECT AddjValue FROM DeviceStatus WHERE ID = '%s' and HardwareID = '%s'" %(ID, self.HardwareID))
                 value = self.dbCursor.fetchone()
                 if value == None:
@@ -327,14 +375,14 @@ class DomoticzDB_DeviceStatus:
     
             except sqlite3.Error as e:
                 Domoticz.Error("retreiveTimeOut_Motion - Database error: %s" %e)
-                Domoticz.Debug("retreiveTimeOut_Motion for ID: %s HardwareID: %s" %(ID, self.HardwareID))
+                self.logging( "Debug", "retreiveTimeOut_Motion for ID: %s HardwareID: %s" %(ID, self.HardwareID))
                 self.closeDB()
                 self.dbCursor = None
                 return 0
     
             except Exception as e:
                 Domoticz.Error("retreiveTimeOut_Motion - Exception: %s" %e)
-                Domoticz.Debug("retreiveTimeOut_Motion for ID: %s HardwareID: %s" %(ID, self.HardwareID))
+                self.logging( "Debug", "retreiveTimeOut_Motion for ID: %s HardwareID: %s" %(ID, self.HardwareID))
                 self.closeDB()
                 self.dbCursor = None
                 return 0
@@ -355,13 +403,13 @@ class DomoticzDB_DeviceStatus:
             self.AdjValue['Temp'][ID]['Stamp'] = 0
 
         if self.AdjValue['Temp'][ID]['Value'] is not None and ( int(time()) < self.AdjValue['Temp'][ID]['Stamp'] + CACHE_TIMEOUT):
-            Domoticz.Debug("Return from Temp cache")
+            self.logging( "Debug", "Return from Temp cache")
             return self.AdjValue['Temp'][ID]['Value']
 
         if  self.dbCursor is None:
             self._openDB( )
             try:
-                Domoticz.Debug("DB access AddjValue for %s" %ID)
+                self.logging( "Debug", "DB access AddjValue for %s" %ID)
                 self.dbCursor.execute("SELECT AddjValue FROM DeviceStatus WHERE ID = '%s' and HardwareID = '%s'" %(ID, self.HardwareID))
                 value = self.dbCursor.fetchone()
                 if value == None:
