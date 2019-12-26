@@ -32,6 +32,7 @@ class DomoticzDB_Preferences:
 
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( database ) :
+            Domoticz.Error("DB_DeviceStatus - Not existing DB %s" %self.database)
             return 
 
     def logging( self, logType, message):
@@ -57,7 +58,6 @@ class DomoticzDB_Preferences:
         except sqlite3.Error as e:
             Domoticz.Error("retreiveAcceptNewHardware - Database error: %s" %e)
             self.closeDB()
-            self.dbCursor = None
             return 0
 
     def closeDB( self ):
@@ -65,6 +65,8 @@ class DomoticzDB_Preferences:
         if self.dbConn is not None:
             self.logging( "Debug", "DB_Preferences - Closing %s" %self.database)
             self.dbConn.close()
+        self.dbConn = None
+        self.dbCursor = None
 
 
     def retreiveAcceptNewHardware( self):
@@ -79,27 +81,22 @@ class DomoticzDB_Preferences:
                 value = self.dbCursor.fetchone()
                 if value == None:
                     self.closeDB()
-                    self.dbCursor = None
                     return 0
                 else:
                     self.preferences = value[0]
                     self.closeDB()
-                    self.dbCursor = None
                     return value[0]
             except sqlite3.Error as e:
                 Domoticz.Error("retreiveAcceptNewHardware - Database error: %s" %e)
                 self.closeDB()
-                self.dbCursor = None
                 return 0
     
             except Exception as e:
                 Domoticz.Error("retreiveAcceptNewHardware - Exception: %s" %e)
                 self.closeDB()
-                self.dbCursor = None
                 return 0
 
             self.closeDB()
-            self.dbCursor = None
             return 0
 
     def retreiveWebUserNamePassword( self ):
@@ -134,23 +131,19 @@ class DomoticzDB_Preferences:
                     self.WebPassword = None
 
                 self.closeDB()
-                self.dbCursor = None
                 return (self.WebUserName, self.WebPassword)
             except sqlite3.Error as e:
                 Domoticz.Error("retreiveWebUserNamePassword - Database error: %s" %e)
                 self.WebPassword = None
                 self.closeDB()
-                self.dbCursor = None
                 return (self.WebUserName, self.WebPassword)
             except Exception as e:
                 Domoticz.Error("retreiveWebUserNamePassword - Exception: %s" %e)
                 self.WebPassword = None
                 self.closeDB()
-                self.dbCursor = None
                 return (self.WebUserName, self.WebPassword)
 
             self.closeDB()
-            self.dbCursor = None
             self.WebUserName = None
             self.WebPassword = None
             return (None, None)
@@ -162,7 +155,6 @@ class DomoticzDB_Preferences:
             self.dbCursor.execute("UPDATE Preferences Set nValue = '0' Where Key = 'AcceptNewHardware' " )
             self.dbConn.commit()
             self.closeDB()
-            self.dbCursor = None
 
     def setAcceptNewHardware( self):
 
@@ -171,7 +163,6 @@ class DomoticzDB_Preferences:
             self.dbCursor.execute("UPDATE Preferences Set nValue = '1' Where Key = 'AcceptNewHardware' " )
             self.dbConn.commit()
             self.closeDB()
-            self.dbCursor = None
 
 
 class DomoticzDB_Hardware:
@@ -187,6 +178,7 @@ class DomoticzDB_Hardware:
 
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( database ) :
+            Domoticz.Error("DB_DeviceStatus - Not existing DB %s" %self.database)
             return
 
     def logging( self, logType, message):
@@ -213,6 +205,8 @@ class DomoticzDB_Hardware:
         if self.dbConn is not None:
             self.logging( "Debug", "DB_Hardware Closing %s" %self.database)
             self.dbConn.close()
+        self.dbConn = None
+        self.dbCursor = None
 
     def disableErasePDM( self):
 
@@ -222,7 +216,6 @@ class DomoticzDB_Hardware:
             self.dbCursor.execute("UPDATE Hardware Set Mode3 = 'False' Where ID = '%s' " %self.HardwareID)
             self.dbConn.commit()
             self.dbConn.close()
-            self.dbCursor = None
 
     def updateMode4( self, newValue):
 
@@ -232,7 +225,6 @@ class DomoticzDB_Hardware:
             self.dbCursor.execute("UPDATE Hardware Set Mode4 = %s Where ID = '%s' " %( newValue, self.HardwareID))
             self.dbConn.commit()
             self.dbConn.close()
-            self.dbCursor = None
 
 
 class DomoticzDB_DeviceStatus:
@@ -273,6 +265,7 @@ class DomoticzDB_DeviceStatus:
 
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( self.database ) :
+            Domoticz.Error("DB_DeviceStatus - Not existing DB %s" %self.database)
             return
 
         self.logging( "Debug", "DB_DeviceStatus - Opening %s" %self.database)
@@ -286,8 +279,8 @@ class DomoticzDB_DeviceStatus:
         if self.dbConn is not None:
             self.logging( "Debug", "DB_DeviceStatus - Closing %s" %self.database)
             self.dbConn.close()
-            self.dbConn = None
-            self.dbCursor = None
+        self.dbConn = None
+        self.dbCursor = None
 
 
     def retreiveAddjValue_baro( self, ID):
@@ -313,28 +306,25 @@ class DomoticzDB_DeviceStatus:
                 self.logging( "Debug", "DB AddjValue2 access for %s" %ID)
                 self.dbCursor.execute("SELECT AddjValue2 FROM DeviceStatus WHERE ID = '%s' and HardwareID = '%s'" %(ID, self.HardwareID))
                 value = self.dbCursor.fetchone()
+                self.logging( "Debug", "--> Value: %s" %value)
                 if value == None:
                     self.AdjValue['Baro'][ID]['Value'] = 0
                     self.AdjValue['Baro'][ID]['Stamp'] = int(time())
                     self.closeDB()
-                    self.dbCursor = None
                     return 0
                 else:
                     self.AdjValue['Baro'][ID]['Value'] = value[0]
                     self.AdjValue['Baro'][ID]['Stamp'] = int(time())
                     self.closeDB()
-                    self.dbCursor = None
                     return value[0]
             except sqlite3.Error as e:
                 Domoticz.Error("retreiveAddjValue_baro - Database error: %s" %e)
                 self.closeDB()
-                self.dbCursor = None
                 return 0
     
             except Exception as e:
                 Domoticz.Error("retreiveAddjValue_baro - Exception: %s" %e)
                 self.closeDB()
-                self.dbCursor = None
                 return 0
 
             Domoticz.Error("retreiveAddjValue_baro - Unexpected exception for ID: %s HardwareID: Ms" %(ID, self.HardwareID))
@@ -362,34 +352,30 @@ class DomoticzDB_DeviceStatus:
                 self.logging( "Debug", "DB access AddjValue for %s" %ID)
                 self.dbCursor.execute("SELECT AddjValue FROM DeviceStatus WHERE ID = '%s' and HardwareID = '%s'" %(ID, self.HardwareID))
                 value = self.dbCursor.fetchone()
+                self.logging( "Debug", "--> Value: %s" %value)
                 if value == None:
                     self.closeDB()
-                    self.dbCursor = None
                     return 0
                 else:
                     self.AdjValue['TimeOutMotion'][ID]['Value'] = value[0]
                     self.AdjValue['TimeOutMotion'][ID]['Stamp'] = int(time())
                     self.closeDB()
-                    self.dbCursor = None
                     return value[0]
     
             except sqlite3.Error as e:
                 Domoticz.Error("retreiveTimeOut_Motion - Database error: %s" %e)
                 self.logging( "Debug", "retreiveTimeOut_Motion for ID: %s HardwareID: %s" %(ID, self.HardwareID))
                 self.closeDB()
-                self.dbCursor = None
                 return 0
     
             except Exception as e:
                 Domoticz.Error("retreiveTimeOut_Motion - Exception: %s" %e)
                 self.logging( "Debug", "retreiveTimeOut_Motion for ID: %s HardwareID: %s" %(ID, self.HardwareID))
                 self.closeDB()
-                self.dbCursor = None
                 return 0
 
             Domoticz.Error("retreiveTimeOut_Motion - Unexpected exception for ID: %s HardwareID: Ms" %(ID, self.HardwareID))
             self.closeDB()
-            self.dbCursor = None
             return 0
 
     def retreiveAddjValue_temp( self, ID):
@@ -412,15 +398,14 @@ class DomoticzDB_DeviceStatus:
                 self.logging( "Debug", "DB access AddjValue for %s" %ID)
                 self.dbCursor.execute("SELECT AddjValue FROM DeviceStatus WHERE ID = '%s' and HardwareID = '%s'" %(ID, self.HardwareID))
                 value = self.dbCursor.fetchone()
+                self.logging( "Debug", "--> Value: %s" %value)
                 if value == None:
                     self.closeDB()
-                    self.dbCursor = None
                     return 0
                 else:
                     self.AdjValue['Temp'][ID]['Value'] = value[0]
                     self.AdjValue['Temp'][ID]['Stamp'] = int(time())
                     self.closeDB()
-                    self.dbCursor = None
                     return value[0]
     
             except sqlite3.Error as e:
@@ -431,10 +416,8 @@ class DomoticzDB_DeviceStatus:
             except Exception as e:
                 Domoticz.Error("retreiveAddjValue_temp - Exception: %s" %e)
                 self.closeDB()
-                self.dbCursor = None
                 return 0
 
             Domoticz.Error("retreiveAddjValue_temp - Unexpected exception for ID: %s HardwareID: Ms" %(ID, self.HardwareID))
             self.closeDB()
-            self.dbCursor = None
             return 0
