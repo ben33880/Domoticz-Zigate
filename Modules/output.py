@@ -1062,11 +1062,6 @@ def processConfigureReporting( self, NWKID=None ):
             if self.ListOfDevices[key]['Model'] != {}:
                 if self.ListOfDevices[key]['Model'] == 'TI0001': # Livolo switch
                     continue
-                if self.ListOfDevices[key]['Model'] in LEGRAND_REMOTES:
-                    # Skip configure Reporting for all Legrand Remotes
-                    continue
-                if self.ListOfDevices[key]['Model'] in ( 'lumi.ctrl_neutral1' , 'lumi.ctrl_neutral2' ):
-                    continue
 
         cluster_list = CFG_RPT_ATTRIBUTESbyCLUSTERS
         if 'Model' in self.ListOfDevices[key]:
@@ -1269,9 +1264,6 @@ def bindDevice( self, ieee, ep, cluster, destaddr=None, destep="01"):
                                 loggingOutput( self, 'Log',"----> Do not bind cluster %s due to Certified Conf for %s/%s" %(cluster, nwkid, ep), nwkid)
                                 return
 
-                    if self.ListOfDevices[nwkid]['Model'] in ( 'lumi.ctrl_neutral2', 'lumi.ctrl_neutral1'):
-                        # Do not bind as the device do not respond to it.
-                        return
                     if self.ListOfDevices[nwkid]['Model'] == '3AFE14010402000D' and cluster == '0500':
                         loggingOutput( self, 'Debug',"Do not Bind Konke 3AFE14010402000D to Zigate Ep %s Cluster %s" %(ep, cluster), nwkid)
                         return    # Skip binding IAS for Konke Motion Sensor
