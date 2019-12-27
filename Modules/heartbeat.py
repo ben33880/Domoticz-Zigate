@@ -24,6 +24,7 @@ from Modules.output import  sendZigateCmd,  \
         setPowerOn_OnOff, \
         scene_membership_request, \
         schneider_thermostat, \
+        bindThermostatversActionneur, \
         ReadAttributeRequest_Ack,  ReadAttributeRequest_0000_basic, \
         ReadAttributeRequest_0000, ReadAttributeRequest_0001, ReadAttributeRequest_0006, ReadAttributeRequest_0008, \
         ReadAttributeRequest_0100, \
@@ -557,6 +558,9 @@ def processNotinDBDevices( self, Devices, NWKID , status , RIA ):
                     cluster_to_bind.append( '0009' )
                 if '0003' not in cluster_to_bind:
                     cluster_to_bind.append( '0003' )
+
+            if schneider and self.pluginconf.pluginConf['enableSchneiderWiser']:
+                bindThermostatversActionneur( self)
 
             for iterEp in self.ListOfDevices[NWKID]['Ep']:
                 for iterBindCluster in cluster_to_bind:      # Binding order is important

@@ -1329,6 +1329,13 @@ def bindDevice( self, ieee, ep, cluster, destaddr=None, destep="01"):
 
     return
 
+def bindThermostatversActionneur( self, thermo_ieee='00124b0004084d3f', thermo_ep='0b', actionneur_ieee='00124b000408759e', actionneur_ep='0b', cluster='0402'):
+
+    Domoticz.Log("Binding Thermostat %s/%s with Actionneur %s/%s on Cluster: %s" %(thermo_ieee, thermo_ep, actionneur_ieee, actionneur_ep, cluster))
+    mode = "03"     # IEEE
+    datas =  str(thermo_ieee)+str(thermo_ep)+str(cluster)+str(mode)+str(actionneur_ieee)+str(actionneur_ep) 
+    sendZigateCmd(self, "0030", datas )
+
 
 def unbindDevice( self, ieee, ep, cluster, destaddr=None, destep="01"):
     '''
