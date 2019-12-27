@@ -15,6 +15,7 @@ import struct
 import json
 
 from Modules.tools import loggingWidget
+from Modules.output import schneider_EHZBRTS_thermoMode
 from Modules.zigateConsts import THERMOSTAT_MODE_2_LEVEL
 
 def CreateDomoDevice(self, Devices, NWKID):
