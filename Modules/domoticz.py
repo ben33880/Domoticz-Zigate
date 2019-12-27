@@ -977,7 +977,7 @@ def MajDomoDevice(self, Devices, NWKID, Ep, clusterID, value, Attribute_='', Col
                     UpdateDevice_v2(self, Devices, x, 0, sValue, BatteryLevel, SignalLevel)
                     Domoticz.Log("MajDomoDevice Thermostat Mode: %s %s" %(nValue,sValue))
 
-            if 'ThermoMode' in ClusterType and DeviceType == 'ThermoModeEHZBRTS':
+            if 'ThermoMode' in ClusterType and DeviceType == 'ThermoModeEHZBRTS' and Attribute_ == '001c':
                 Domoticz.Log("MajDomoDevice EHZBRTS Schneider Thermostat Mode %s" %value)
                 # Decode value
 
