@@ -243,7 +243,6 @@ class DomoticzDB_DeviceStatus:
         self.AdjValue['TimeOutMotion'] = {}
         self.AdjValue['Temp'] = {}
 
-        Domoticz.Log("INIT- self.pluginconf: %s" %(str(self.pluginconf)))
         # Check if we have access to the database, if not Error and return
         if not os.path.isfile( database ) :
             return
