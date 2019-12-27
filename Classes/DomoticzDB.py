@@ -295,8 +295,9 @@ class DomoticzDB_DeviceStatus:
             self.AdjValue['Baro'][ID]['Stamp'] = 0
 
         self.logging( "Debug", "Baro - Value: %s, Stamp: %s, Today: %s" %(self.AdjValue['Baro'][ID]['Value'], self.AdjValue['Baro'][ID]['Stamp'], int(time() )))
-        if self.AdjValue['Baro'][ID]['Value'] is not None and (int(time()) < self.AdjValue['Baro'][ID]['Stamp'] + CACHE_TIMEOUT):
-            self.logging( "Debug", "Return from Baro cache")
+        #if self.AdjValue['Baro'][ID]['Value'] is not None and (int(time()) < self.AdjValue['Baro'][ID]['Stamp'] + CACHE_TIMEOUT):
+        if self.AdjValue['Baro'][ID]['Value'] is not None:
+            self.logging( "Debug", "Return from Baro cache %s" %self.AdjValue['Baro'][ID]['Value'])
             return self.AdjValue['Baro'][ID]['Value']
 
         # We need to look to DB
@@ -342,8 +343,9 @@ class DomoticzDB_DeviceStatus:
             self.AdjValue['TimeOutMotion'][ID]['Value'] = None
             self.AdjValue['TimeOutMotion'][ID]['Stamp'] = 0
 
-        if self.AdjValue['TimeOutMotion'][ID]['Value'] is not None  and ( int(time()) < self.AdjValue['TimeOutMotion'][ID]['Stamp'] + CACHE_TIMEOUT):
-            self.logging( "Debug", "Return from Timeout cache")
+        #if self.AdjValue['TimeOutMotion'][ID]['Value'] is not None  and ( int(time()) < self.AdjValue['TimeOutMotion'][ID]['Stamp'] + CACHE_TIMEOUT):
+        if self.AdjValue['TimeOutMotion'][ID]['Value'] is not None:
+            self.logging( "Debug", "Return from Timeout cache %s" %self.AdjValue['TimeOutMotion'][ID]['Value'])
             return self.AdjValue['TimeOutMotion'][ID]['Value']
 
         if  self.dbCursor is None:
@@ -388,8 +390,9 @@ class DomoticzDB_DeviceStatus:
             self.AdjValue['Temp'][ID]['Value'] = None
             self.AdjValue['Temp'][ID]['Stamp'] = 0
 
-        if self.AdjValue['Temp'][ID]['Value'] is not None and ( int(time()) < self.AdjValue['Temp'][ID]['Stamp'] + CACHE_TIMEOUT):
-            self.logging( "Debug", "Return from Temp cache")
+        #if self.AdjValue['Temp'][ID]['Value'] is not None and ( int(time()) < self.AdjValue['Temp'][ID]['Stamp'] + CACHE_TIMEOUT):
+        if self.AdjValue['Temp'][ID]['Value'] is not None:
+            self.logging( "Debug", "Return from Temp cache %s" %self.AdjValue['Temp'][ID]['Value'])
             return self.AdjValue['Temp'][ID]['Value']
 
         if  self.dbCursor is None:
