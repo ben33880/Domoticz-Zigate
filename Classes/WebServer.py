@@ -1209,7 +1209,7 @@ class WebServer(object):
                                 self.pluginconf.pluginConf['debugMatchId'] = self.pluginconf.pluginConf['debugMatchId'][:-1] # Remove the last ,
                         else:
                             if SETTINGS[_theme]['param'][param]['type'] == 'hex':
-                                Domoticz.Log("--> %s: %s - %s" %(param, self.pluginconf.pluginConf[param], type(self.pluginconf.pluginConf[param])))
+                                #Domoticz.Log("--> %s: %s - %s" %(param, self.pluginconf.pluginConf[param], type(self.pluginconf.pluginConf[param])))
                                 self.pluginconf.pluginConf[param] = int(setting_lst[setting]['current'],16)
                             else:
                                 self.pluginconf.pluginConf[param] = setting_lst[setting]['current']
