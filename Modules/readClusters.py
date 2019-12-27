@@ -875,7 +875,7 @@ def Cluster0702( self, Devices, MsgSQN, MsgSrcAddr, MsgSrcEp, MsgClusterId, MsgA
         if '0302' in self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]:
             diviser = self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]['0302']
             value = round( conso / ( diviser / 1000 ),3)
-            loggingCluster( self, 'Log', "Cluster0702 - 0x0400 Instant demand %s, div: %s --> %s Watts" %( conso, diviser, value))
+            loggingCluster( self, 'Debug', "Cluster0702 - 0x0400 Instant demand %s, div: %s --> %s Watts" %( conso, diviser, value))
         else:
             # Old fashion
             value = round(conso/10, 3)
