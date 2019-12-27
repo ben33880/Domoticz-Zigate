@@ -1100,6 +1100,18 @@ def processConfigureReporting( self, NWKID=None ):
                             if cluster in ( '0402', '0403', '0405', '0406'):
                                 continue
                 
+                if 'Manufacturer' in self.ListOfDevices[key]:
+                    if self.ListOfDevices[key]['Manufacturer'] == '1110': # Profalux
+                        if self.ListOfDevices[key]['ZDeviceID'] == '0201': # Remote
+                            # Do not Configure Reports Remote Command
+                            loggingOutput( self, 'Log',"----> Do not Configure Reports cluster %s for Profalux Remote command %s/%s" %(cluster, key, ep), key)
+                            continue
+                        elif self.ListOfDevices[key]['ZDeviceID'] == '0200': # Shutter
+                            if cluster not in  ( '0008' ):
+                                # Do not Configure Reports other cluster than 0x0008
+                                loggingOutput( self, 'Log',"----> Do not Configure Reports cluster %s for Profalux shutter %s/%s" %(cluster, key, ep), key)
+                                continue
+
                 loggingOutput( self, 'Debug2', "--------> Configurereporting - processing %s/%s - %s" %(key,Ep,cluster), nwkid=key)
                 if 'ConfigureReporting' not in self.ListOfDevices[key]:
                     self.ListOfDevices[key]['ConfigureReporting'] = {}
@@ -1259,6 +1271,18 @@ def bindDevice( self, ieee, ep, cluster, destaddr=None, destep="01"):
     if ieee in self.IEEE2NWK:
         nwkid = self.IEEE2NWK[ieee]
         if nwkid in self.ListOfDevices:
+            if 'Manufacturer' in self.ListOfDevices[nwkid]:
+                if self.ListOfDevices[nwkid]['Manufacturer'] == '1110': # Profalux
+                    if self.ListOfDevices[nwkid]['ZDeviceID'] == '0201': # Remote
+                        # Do not bind Remote Command
+                        loggingOutput( self, 'Log',"----> Do not bind cluster %s for Profalux Remote command %s/%s" %(cluster, nwkid, ep), nwkid)
+                        return
+                    elif self.ListOfDevices[nwkid]['ZDeviceID'] == '0200': # Shutter
+                        if cluster not in  ( '0008' ):
+                            # Do not bind other cluster than 0x0008
+                            loggingOutput( self, 'Log',"----> Do not bind cluster %s for Profalux shutter %s/%s" %(cluster, nwkid, ep), nwkid)
+                            return
+
             if 'Model' in self.ListOfDevices[nwkid]:
                 if self.ListOfDevices[nwkid]['Model'] != {}:
                     if self.ListOfDevices[nwkid]['Model'] in self.DeviceConf:
