@@ -1118,7 +1118,7 @@ class WebServer(object):
                             setting['restart_need'] = SETTINGS[_theme]['param'][param]['restart']
                             setting['Advanced'] = SETTINGS[_theme]['param'][param]['Advanced']
                             if SETTINGS[_theme]['param'][param]['type'] == 'hex':
-                                Domoticz.Log("--> %s: %s - %s" %(param, self.pluginconf.pluginConf[param], type(self.pluginconf.pluginConf[param])))
+                                Domoticz.Debug("--> %s: %s - %s" %(param, self.pluginconf.pluginConf[param], type(self.pluginconf.pluginConf[param])))
                                 if isinstance( self.pluginconf.pluginConf[param], int):
                                     setting['current_value'] = '%x' %self.pluginconf.pluginConf[param] 
                                 else:
