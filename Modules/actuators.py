@@ -45,7 +45,7 @@ def actuators( self, action, nwkid, epout, DeviceType, cmd=None, value=None, col
     elif action == 'IdentifyEffect':
         actuator_identify( self, nwkid, epout, value)
     else:
-        Domoticz.Error("actuators - Command: %s error: %s/%s %s %s" %(action, nwkid, epout, value, color))
+        Domoticz.Error("actuators - Command: %s not yet implemented: %s/%s %s %s" %(action, nwkid, epout, value, color))
 
 
 def actuator_toggle( self, nwkid, EPout, DeviceType):
