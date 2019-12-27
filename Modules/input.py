@@ -2073,6 +2073,36 @@ def Decode8085(self, Devices, MsgData, MsgRSSI) :
             MajDomoDevice(self, Devices, MsgSrcAddr, MsgEP, MsgClusterId, selector )
             self.ListOfDevices[MsgSrcAddr]['Ep'][MsgEP][MsgClusterId]['0000'] = selector
 
+    elif 'Manufacturer' in self.ListOfDevices[MsgSrcAddr]:
+        if self.ListOfDevices[MsgSrcAddr]['Manufacturer'] == '1110':
+            # Profalux
+            Domoticz.Log("MsgData: %s" %MsgData)
+
+            TYPE_ACTIONS = { None: '', '03': 'stop', '05': 'move' }
+            DIRECTION = { None: '', '00': 'up', '01': 'down'}
+
+            step_mod = MsgData[14:16]
+            Domoticz.Log("step_mod: %s" %step_mod)
+
+            if step_mod in TYPE_ACTIONS:
+                Domoticz.Error("Decode8085 - Profalux Remote, unknown Action: %s" %step_mod)
+
+            selector = up_down = step_size = transition = None
+            if len(MsgData) >= 18: up_down = MsgData[16:18]
+            if len(MsgData) >= 20: step_size = MsgData[18:20]
+            if len(MsgData) >= 22: transition = MsgData[20:22]
+
+            if TYPE_ACTIONS[step_mod] in ( 'move'):
+                selector = TYPE_ACTIONS[step_mod] + DIRECTION[up_down]
+            elif TYPE_ACTIONS[step_mod] in ( 'stop' ):
+                selector = TYPE_ACTIONS[step_mod]
+            else:
+                Domoticz.Error("Decode8085 - Profalux remote Unknown state for %s step_mod: %s up_down: %s" %(MsgSrcAddr, step_mod, up_down))
+
+            loggingInput( self, 'Debug', "Decode8085 - Profalux remote selector: %s" %selector, MsgSrcAddr)
+            if selector:
+                MajDomoDevice(self, Devices, MsgSrcAddr, MsgEP, MsgClusterId, selector )
+
     else:
        Domoticz.Log("Decode8085 - SQN: %s, Addr: %s, Ep: %s, Cluster: %s, Cmd: %s, Unknown: %s " \
                %(MsgSQN, MsgSrcAddr, MsgEP, MsgClusterId, MsgCmd, unknown_))
