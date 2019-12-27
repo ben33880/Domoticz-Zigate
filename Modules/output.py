@@ -2027,7 +2027,9 @@ def schneider_EHZBRTS_thermoMode( self, key, mode):
             10: 0x01,
             20: 0x02,
             30: 0x03,
-            40: 0x06,
+            40: 0x04,
+            50: 0x05,
+            60: 0x06,
             }
 
 

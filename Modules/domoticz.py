@@ -178,8 +178,8 @@ def CreateDomoDevice(self, Devices, NWKID):
             if t == "ThermoModeEHZBRTS":
                 self.ListOfDevices[NWKID]['Status'] = "inDB"
                 unit = FreeUnit(self, Devices)
-                Options = {"LevelActions": "||||", "LevelNames": "Off|Manual|Programme|Eco|Vacations",
-                           "LevelOffHidden": "false", "SelectorStyle": "0"}
+                Options = {"LevelActions": "||||||", "LevelNames": "Off| Manual| Schedule| Manual Energy Saver| Schedule Energy Saver| Holiday| Holiday Frost Protection",
+                           "LevelOffHidden": "false", "SelectorStyle": "1"}
                 myDev = Domoticz.Device(DeviceID=str(DeviceID_IEEE), Name=str(t) + "-" + str(DeviceID_IEEE) + "-" + str(Ep),
                            Unit=unit, Type=244, Subtype=62, Switchtype=18, Options=Options)
                 myDev.Create()
@@ -979,6 +979,20 @@ def MajDomoDevice(self, Devices, NWKID, Ep, clusterID, value, Attribute_='', Col
 
             if 'ThermoMode' in ClusterType and DeviceType == 'ThermoModeEHZBRTS':
                 Domoticz.Log("MajDomoDevice EHZBRTS Schneider Thermostat Mode %s" %value)
+                # Decode value
+
+                THERMOSTAT_MODE = {
+                        0:0,
+                        1:10,
+                        2:20,
+                        3:30,
+                        4:40,
+                        5:50,
+                        6:60
+                        }
+
+                if value in THERMOSTAT_MODE:
+                    value = THERMOSTAT_MODE[ value ]
                 schneider_EHZBRTS_thermoMode( self, NWKID, value)
 
             if ClusterType == "Temp":  # temperature
