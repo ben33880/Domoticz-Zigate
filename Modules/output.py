@@ -1109,7 +1109,7 @@ def processConfigureReporting( self, NWKID=None ):
                         elif self.ListOfDevices[key]['ZDeviceID'] == '0200': # Shutter
                             if cluster not in  ( '0008' ):
                                 # Do not Configure Reports other cluster than 0x0008
-                                loggingOutput( self, 'Log',"----> Do not Configure Reports cluster %s for Profalux shutter %s/%s" %(cluster, key, ep), key)
+                                loggingOutput( self, 'Log',"----> Do not Configure Reports cluster %s for Profalux shutter %s/%s" %(cluster, key, Ep), key)
                                 continue
 
                 loggingOutput( self, 'Debug2', "--------> Configurereporting - processing %s/%s - %s" %(key,Ep,cluster), nwkid=key)
