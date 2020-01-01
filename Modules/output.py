@@ -1104,7 +1104,7 @@ def processConfigureReporting( self, NWKID=None ):
                     if self.ListOfDevices[key]['Manufacturer'] == '1110': # Profalux
                         if self.ListOfDevices[key]['ZDeviceID'] == '0201': # Remote
                             # Do not Configure Reports Remote Command
-                            loggingOutput( self, 'Log',"----> Do not Configure Reports cluster %s for Profalux Remote command %s/%s" %(cluster, key, ep), key)
+                            loggingOutput( self, 'Log',"----> Do not Configure Reports cluster %s for Profalux Remote command %s/%s" %(cluster, key, Ep), key)
                             continue
                         elif self.ListOfDevices[key]['ZDeviceID'] == '0200': # Shutter
                             if cluster not in  ( '0008' ):
