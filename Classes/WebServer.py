@@ -409,6 +409,7 @@ class WebServer(object):
     def do_rest( self, Connection, verb, data, version, command, parameters):
 
         REST_COMMANDS = { 
+                'binding':       {'Name':'binding',       'Verbs':{'PUT'}, 'function':self.rest_binding},
                 'new-hrdwr':     {'Name':'new-hrdwr',     'Verbs':{'GET'}, 'function':self.rest_new_hrdwr},
                 'rcv-nw-hrdwr':  {'Name':'rcv-nw-hrdwr',  'Verbs':{'GET'}, 'function':self.rest_rcv_nw_hrdwr},
                 'device':        {'Name':'device',        'Verbs':{'GET'}, 'function':self.rest_Device},
@@ -1955,6 +1956,35 @@ class WebServer(object):
         # end if Verb=
 
         return _response
+
+    def rest_binding( self, verb, data, parameters):
+
+        _response = setupHeadersResponse()
+        if self.pluginconf.pluginConf['enableKeepalive']:
+            _response["Headers"]["Connection"] = "Keep-alive"
+        else:
+            _response["Headers"]["Connection"] = "Close"
+        _response["Status"] = "200 OK"
+        _response["Headers"]["Content-Type"] = "application/json; charset=utf-8"
+
+        if verb == 'PUT':
+            Domoticz.Log("rest_binding %s %s" %(data, parameters))
+            _response["Data"] = None
+            if len(parameters) == 0:
+                data = data.decode('utf8')
+                data = json.loads(data)
+
+                if 'source_ieee' not in data and \
+                        'source_ep' not in data and \
+                        'dest_ieee' not in data and \
+                        'dest_ep' not in data and \
+                        'cluster' not in data:
+                    Domoticz.Log("-----> uncomplet json %s" %data)
+                    return
+
+                self.logging( 'Log', "rest_binding - Source: %s/%s Dest: %s/%s Cluster: %s" %(data['source_ieee'], data['source_ep'], data['dest_ieee'], data['dest_ep'], data['cluster']))
+                _response["Data"] = json.dumps( "Binding cluster %s between %s/%s and %s/%s" %(data['cluster'], data['source_ieee'], data['source_ep'], data['dest_ieee'], data['dest_ep']))
+                return _response
 
     def rest_dev_command( self, verb, data, parameters):
 
