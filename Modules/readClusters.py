@@ -1990,40 +1990,50 @@ def Cluster0201( self, Devices, MsgSQN, MsgSrcAddr, MsgSrcEp, MsgClusterId, MsgA
         self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
 
     elif MsgAttrID in ( '4000', '4001', '4002', '4003', '4008' ):
-        # Eurotronic SPZB Specifics
 
-        if MsgAttrID == '4000': # TRV Mode for EUROTRONICS
-            loggingCluster( self, 'Debug', "ReadCluster 0201 - TRV Mode: %s" %value, MsgSrcAddr)
-            self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
-    
-        elif MsgAttrID == '4001': # Valve position for EUROTRONICS
-            loggingCluster( self, 'Debug', "ReadCluster 0201 - Valve position: %s" %value, MsgSrcAddr)
-            self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
-    
-        elif MsgAttrID == '4002': # Erreors for EUROTRONICS
-            loggingCluster( self, 'Debug', "ReadCluster 0201 - Status: %s" %value, MsgSrcAddr)
-            self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
-    
-        elif MsgAttrID == '4003': # Current Temperature Set point for EUROTRONICS
-            setPoint = ValueTemp = round(int(value)/100,2)
-            if '0012' in self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]:
-                setPoint = self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]['0012']
-            loggingCluster( self, 'Debug', "ReadCluster 0201 - Current Temp Set point: %s versus %s " %(ValueTemp, setPoint), MsgSrcAddr)
-            if ValueTemp != float(setPoint):
-                # Seems that there is a local setpoint
-                MajDomoDevice(self, Devices, MsgSrcAddr, MsgSrcEp, '0201',ValueTemp, Attribute_=MsgAttrID)
-                self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = ValueTemp
+        eurotronics = False
+        if 'Manufacturer' in self.ListOfDevices[MsgSrcAddr]:
+            if self.ListOfDevices[MsgSrcAddr]['Manufacturer'] == '1037':
+                eurotronics = True
+        if 'Manufacturer Name' in self.ListOfDevices[MsgSrcAddr]:
+            if self.ListOfDevices[MsgSrcAddr]['Manufacturer Name'] == 'Eurotronic':
+                eurotronics = True
 
-        elif MsgAttrID == '4008': # Host Flags for EUROTRONICS
-            HOST_FLAGS = {
-                    0x000002:'Display Flipped',
-                    0x000004:'Boost mode',
-                    0x000010:'disable off mode',
-                    0x000020:'enable off mode',
-                    0x000080:'child lock'
-                    }
-            loggingCluster( self, 'Debug', "ReadCluster 0201 - Host Flags: %s" %value, MsgSrcAddr)
-            self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = MsgClusterData
+        if eurotronics:
+            # Eurotronic SPZB Specifics
+            if MsgAttrID == '4000': # TRV Mode for EUROTRONICS
+                loggingCluster( self, 'Debug', "ReadCluster 0201 - %s/%s TRV Mode: %s" %(MsgSrcAddr, MsgSrcEp,value), MsgSrcAddr)
+                self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
+     
+            elif MsgAttrID == '4001': # Valve position for EUROTRONICS
+                loggingCluster( self, 'Debug', "ReadCluster 0201 - %s/%s Valve position: %s" %(MsgSrcAddr, MsgSrcEp,value), MsgSrcAddr)
+                self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
+     
+            elif MsgAttrID == '4002': # Erreors for EUROTRONICS
+                loggingCluster( self, 'Debug', "ReadCluster 0201 - %s/%s Status: %s" %(MsgSrcAddr, MsgSrcEp,value), MsgSrcAddr)
+                self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = value
+     
+            elif MsgAttrID == '4003': # Current Temperature Set point for EUROTRONICS
+                setPoint = ValueTemp = round(int(value)/100,2)
+                if '0012' in self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]:
+                    setPoint = self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]['0012']
+                loggingCluster( self, 'Debug', "ReadCluster 0201 - %s/%s Current Temp Set point: %s versus %s " %(MsgSrcAddr, MsgSrcEp,ValueTemp, setPoint), MsgSrcAddr)
+                if ValueTemp != float(setPoint):
+                    # Seems that there is a local setpoint
+                    MajDomoDevice(self, Devices, MsgSrcAddr, MsgSrcEp, '0201',ValueTemp, Attribute_=MsgAttrID)
+                    self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = ValueTemp
+                    self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId]['0012'] = ValueTemp
+    
+            elif MsgAttrID == '4008': # Host Flags for EUROTRONICS
+                HOST_FLAGS = {
+                        0x000002:'Display Flipped',
+                        0x000004:'Boost mode',
+                        0x000010:'disable off mode',
+                        0x000020:'enable off mode',
+                        0x000080:'child lock'
+                        }
+                loggingCluster( self, 'Debug', "ReadCluster 0201 - %s/%s Host Flags: %s" %(MsgSrcAddr, MsgSrcEp,value), MsgSrcAddr)
+                self.ListOfDevices[MsgSrcAddr]['Ep'][MsgSrcEp][MsgClusterId][MsgAttrID] = MsgClusterData
         
     elif MsgAttrID == 'e010': # Schneider
         loggingCluster( self, 'Log', "readCluster - %s - %s/%s Schneider Attribute 0xe0010 %s " %(MsgClusterId, MsgSrcAddr, MsgSrcEp, MsgClusterData), MsgSrcAddr)
