@@ -1864,15 +1864,8 @@ def ReadAttributeRequest_0201(self, key):
         ReadAttributeReq( self, key, EPin, EPout, "0201", listAttributes )
 
     listAttributes = []
-    if _model and str(self.ListOfDevices[key]['Model']).find('SPZB') == 0:
-        loggingOutput( self, 'Debug', "- req Attributes for Eurotronic", nwkid=key)
-        listAttributes.append(0x4000)        # TRV Mode
-        listAttributes.append(0x4001)        # Set Valve Position
-        listAttributes.append(0x4002)        # Errors
-        listAttributes.append(0x4003)        # Curret Temperature Set point Eurotronics
-        listAttributes.append(0x4008)        # Host Flag
 
-    elif _model and str(self.ListOfDevices[key]['Model']).find('Super TR') == 0:
+    if _model and str(self.ListOfDevices[key]['Model']).find('Super TR') == 0:
         loggingOutput( self, 'Debug', "- req Attributes for  Super TR", nwkid=key)
         listAttributes.append(0x0403)    
         listAttributes.append(0x0405)
