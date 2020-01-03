@@ -961,9 +961,11 @@ def MajDomoDevice(self, Devices, NWKID, Ep, clusterID, value, Attribute_='', Col
                 UpdateDevice_v2(self, Devices, x, 0, sValue, BatteryLevel, SignalLevel)
 
             if 'ThermoSetpoint' in ClusterType and DeviceType == 'ThermoSetpoint' and Attribute_ in ( '4003', '0012'):
-                nValue = round(float(value),2)
 
+                nValue = round(float(value),2)
                 sValue = "%s;%s" % (nValue, nValue)
+
+                Domoticz.Log("MajDomoDevice Thermostat Setpoint: %s %s" %(nValue,sValue))
                 UpdateDevice_v2(self, Devices, x, 0, sValue, BatteryLevel, SignalLevel)
 
             if 'ThermoMode' in ClusterType and DeviceType == 'ThermoMode' and Attribute_ == '001c':

@@ -217,7 +217,7 @@ def importDeviceConfV2( self ):
                     Domoticz.Status("--> Config for %s/%s" %( brand, device_model_name))
                     self.DeviceConf[ device_model_name ] = dict(model_definition)
                 else:
-                    Domoticz.Log("--> Config for %s/%s not loaded as already defined")
+                    Domoticz.Log("--> Config for %s/%s not loaded as already defined" %(brand, device_model_name))
 
 def checkDevices2LOD( self, Devices):
 
