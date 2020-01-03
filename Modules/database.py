@@ -135,9 +135,16 @@ def WriteDeviceList(self, count):
             Domoticz.Error("WriteDeviceList - self.pluginconf.pluginConf['pluginData']: %s , self.DeviceListName: %s" %(self.pluginconf.pluginConf['pluginData'], self.DeviceListName))
         _DeviceListFileName = self.pluginconf.pluginConf['pluginData'] + self.DeviceListName
         Modules.tools.loggingDatabase( self, 'Debug', "Write " + _DeviceListFileName + " = " + str(self.ListOfDevices))
-        with open( _DeviceListFileName , 'wt') as file:
-            for key in self.ListOfDevices :
-                file.write(key + " : " + str(self.ListOfDevices[key]) + "\n")
+        try:
+            with open( _DeviceListFileName , 'wt') as file:
+                for key in self.ListOfDevices :
+                    try:
+                        file.write(key + " : " + str(self.ListOfDevices[key]) + "\n")
+                    except IOError:
+                        Domoticz.Error("Error while writing to plugin Database %s" %_DeviceListFileName)
+        except IOError:
+            Domoticz.Error("Error while Opening plugin Database %s" %_DeviceListFileName)
+
         self.HBcount=0
         Modules.tools.loggingDatabase( self, 'Debug', "WriteDeviceList - flush Plugin db to %s" %_DeviceListFileName)
     else :
@@ -261,8 +268,11 @@ def saveZigateNetworkData( self, nkwdata ):
 
         json_filename = self.pluginconf.pluginConf['pluginData'] + "/Zigate.json" 
         Modules.tools.loggingDatabase( self, 'Debug', "Write " + json_filename + " = " + str(self.ListOfDevices))
-        with open (json_filename, 'wt') as json_file:
-            json.dump(nkwdata, json_file, indent=4, sort_keys=True)
+        try:
+            with open (json_filename, 'wt') as json_file:
+                json.dump(nkwdata, json_file, indent=4, sort_keys=True)
+        except IOError:
+            Domoticz.Error("Error while writing Zigate Network Details%s" %json_filename)
 
 
 def CheckDeviceList(self, key, val) :
