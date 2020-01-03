@@ -268,7 +268,8 @@ def retreive_ListOfAttributesByCluster( self, key, Ep, cluster ):
             '000a': [ 0x0000],
             '000c': [ 0x0051, 0x0055, 0x006f, 0xff05],
             '0100': [ 0x0000, 0x0001, 0x0002, 0x0010, 0x0011],
-            '0102': [ 0x0000, 0x0001, 0x0002, 0x0003, 0x004, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B, 0x0010, 0x0011, 0x0014, 0x0017, 0xfffd],
+            '0102': [ 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0007, 0x0008, 0x0009, 0x000A, 0x000B, 0x0010, 0x0011, 0x0014, 0x0017, 0xfffd],
+            '0201': [ 0x0000, 0x0008, 0x0010, 0x0012,  0x0014, 0x0015, 0x0016, 0x001B, 0x001C, 0x001F],
             '0300': [ 0x0000, 0x0001, 0x0003, 0x0004, 0x0007, 0x0008, 0x4010],
             '0400': [ 0x0000],
             '0402': [ 0x0000],
@@ -664,6 +665,54 @@ def ReadAttributeRequest_0102(self, key):
     loggingOutput( self, 'Debug', "Request 0x0102 info via Read Attribute request: " + key + " EPout = " + EPout , nwkid=key)
     ReadAttributeReq( self, key, "01", EPout, "0102", listAttributes)
 
+def ReadAttributeRequest_0201(self, key):
+    # Thermostat 
+
+    loggingOutput( self, 'Debug', "ReadAttributeRequest_0201 - Key: %s " %key, nwkid=key)
+    EPin = "01"
+    EPout= "01"
+    for tmpEp in self.ListOfDevices[key]['Ep']:
+            if "0201" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
+                    EPout=tmpEp
+
+
+    listAttributes = []
+
+    for iterAttr in retreive_ListOfAttributesByCluster( self, key, EPout,  '0201'):
+        if iterAttr not in listAttributes:
+            listAttributes.append( iterAttr )
+
+    if 'Model' in self.ListOfDevices[key]:
+        _model = True
+    if _model and str(self.ListOfDevices[key]['Model']).find('Super TR') == 0:
+        loggingOutput( self, 'Debug', "- req Attributes for  Super TR", nwkid=key)
+        listAttributes.append(0x0403)    
+        listAttributes.append(0x0405)
+        listAttributes.append(0x0406)
+        listAttributes.append(0x0408)   
+        listAttributes.append(0x0409)  
+
+    if len(listAttributes) > 0:
+        loggingOutput( self, 'Debug', "Request 0201 %s/%s-%s 0201 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
+        ReadAttributeReq( self, key, EPin, EPout, "0201", listAttributes )
+
+
+def ReadAttributeRequest_0204(self, key):
+
+    loggingOutput( self, 'Debug', "ReadAttributeRequest_0204 - Key: %s " %key, nwkid=key)
+    # Power Config
+    EPin = "01"
+    EPout= "01"
+    for tmpEp in self.ListOfDevices[key]['Ep']:
+            if "0204" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
+                    EPout=tmpEp
+
+    listAttributes = []
+    listAttributes.append(0x0001) # Read KeypadLockout
+
+    if len(listAttributes) > 0:
+        loggingOutput( self, 'Debug', "Request 0204 %s/%s-%s 0204 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
+        ReadAttributeReq( self, key, EPin, EPout, "0204", listAttributes )
 def ReadAttributeRequest_fc00(self, key):
 
     EPin = "01"
@@ -1832,75 +1881,6 @@ def thermostat_Mode( self, key, mode ):
     loggingOutput( self, 'Debug', "thermostat_Mode - for %s with value %s / cluster: %s, attribute: %s type: %s"
             %(key,data,cluster_id,attribute,data_type), nwkid=key)
 
-def ReadAttributeRequest_0201(self, key):
-
-    loggingOutput( self, 'Debug', "ReadAttributeRequest_0201 - Key: %s " %key, nwkid=key)
-    # Power Config
-    EPin = "01"
-    EPout= "01"
-    for tmpEp in self.ListOfDevices[key]['Ep']:
-            if "0201" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
-                    EPout=tmpEp
-
-    if 'Model' in self.ListOfDevices[key]:
-        _model = True
-
-    # Thermostat Information
-    listAttributes = []
-
-    if _model and self.ListOfDevices[key]['Model'] != 'EH-ZB-RTS':
-        listAttributes.append(0x0000)        # Local Temp / 0x29
-        listAttributes.append(0x0008)        # Pi Heating Demand (valve position %)
-        listAttributes.append(0x0010)        # Calibration / 0x28
-        #listAttributes.append(0x0011)        # COOLING_SETPOINT / 0x29
-        listAttributes.append(0x0012)        # HEATING_SETPOINT / 0x29
-        listAttributes.append(0x0014)        # Unoccupied Heating Setpoint 0x29
-        #listAttributes.append(0x0015)        # MIN HEATING / 0x29
-        #listAttributes.append(0x0016)        # MAX HEATING / 0x29
-        listAttributes.append(0x001B)        # Control sequence
-        listAttributes.append(0x001C)        # System Mode
-        listAttributes.append(0x001F)        # Set Mode
-        loggingOutput( self, 'Debug', "Request 0201 %s/%s-%s 0201 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
-        ReadAttributeReq( self, key, EPin, EPout, "0201", listAttributes )
-
-    listAttributes = []
-
-    if _model and str(self.ListOfDevices[key]['Model']).find('Super TR') == 0:
-        loggingOutput( self, 'Debug', "- req Attributes for  Super TR", nwkid=key)
-        listAttributes.append(0x0403)    
-        listAttributes.append(0x0405)
-        listAttributes.append(0x0406)
-        listAttributes.append(0x0408)   
-        listAttributes.append(0x0409)  
-
-    elif _model and self.ListOfDevices[key]['Model'] != 'EH-ZB-RTS':
-        listAttributes.append(0x0012)    
-        listAttributes.append(0xe010)     
-        listAttributes.append(0x0015)
-        listAttributes.append(0x0016)
-
-
-    if len(listAttributes) > 0:
-        loggingOutput( self, 'Debug', "Request 0201 %s/%s-%s 0201 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
-        ReadAttributeReq( self, key, EPin, EPout, "0201", listAttributes )
-
-
-def ReadAttributeRequest_0204(self, key):
-
-    loggingOutput( self, 'Debug', "ReadAttributeRequest_0204 - Key: %s " %key, nwkid=key)
-    # Power Config
-    EPin = "01"
-    EPout= "01"
-    for tmpEp in self.ListOfDevices[key]['Ep']:
-            if "0204" in self.ListOfDevices[key]['Ep'][tmpEp]: #switch cluster
-                    EPout=tmpEp
-
-    listAttributes = []
-    listAttributes.append(0x0001) # Read KeypadLockout
-
-    if len(listAttributes) > 0:
-        loggingOutput( self, 'Debug', "Request 0204 %s/%s-%s 0204 %s " %(key, EPin, EPout, listAttributes), nwkid=key)
-        ReadAttributeReq( self, key, EPin, EPout, "0204", listAttributes )
 
 def Thermostat_LockMode( self, key, lockmode):
 
